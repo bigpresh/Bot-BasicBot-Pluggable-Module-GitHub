@@ -7,5 +7,4 @@ lib/Bot/BasicBot/Pluggable/Module/GitHub/EasyLinks.pm
 lib/Bot/BasicBot/Pluggable/Module/GitHub/PullRequests.pm
 t/00-load.t
 t/manifest.t
-t/pod-coverage.t
 t/pod.t
