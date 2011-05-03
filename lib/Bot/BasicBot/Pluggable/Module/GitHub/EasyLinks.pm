@@ -55,6 +55,23 @@ sub said {
         return "Pull request $pr_num ($title) - $pull_url";
     }
 
+    # If it looks likely to be a commit SHA (hex):
+    if (my($sha) = $mess->{body} =~ m{\b ([0-9a-f]{6,}) \b}x) {
+        my $commit = JSON::from_json(
+            LWP::Simple::get(
+                "https://github.com/api/v2/json/commits/show/$project/$sha"
+            )
+        );
+        # If we got nothing back, assume it wasn't actually a valid SHA
+        return 0 if ! $commit;
+
+        # OK, take the first line of the commit message as a title:
+        my $summary = (split /\n/, $commit->{message} )[0];
+
+        my $commit_url = "https://github.com" . $commit->{url};;
+        return "Commit $sha ($summary) - $commit_url";
+    }
+
     
     # OK, it's not something we want to respond to:
     return 0;
