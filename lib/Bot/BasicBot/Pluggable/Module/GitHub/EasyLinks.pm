@@ -32,28 +32,32 @@ sub said {
     
     return unless $pri == 2;
 
-    if ($mess->{body} =~ /^!pr (?: \s+ (\S+))?/xi) {
-        my $check_project = $1;
-        $check_project ||=  get_default_project(
-            $self->get('user_github_project'), $mess->{channel}
-        );
-        if (!$check_project) {
-            $self->reply(
-                $mess, 
-                "No GitHub project defined"
-            );
-            return 1;
-        }
-        for my $project (split /,/, $check_project) {
-            my $prs = $self->_get_pull_request_count($project);
-            $self->say(
-                channel => $mess->{channel},
-                body => "Open pull requests for $project : $prs",
-            );
-        }
-        return 1; # "swallow" this message
+    # Firstly, do nothing if the message doesn't look at all interesting:
+    return 0 if $mess->{body} !~ /issue|pr|pull request/i;
+
+    # OK, find out what project is appropriate for this channel (if there isn't
+    # one, go no further)
+    my $project = $self->github_project($mess->{channel})
+        or return 0;
+
+    # Handle issues, first
+    if (my ($issue_num) = $mess->{body} =~ m{ (?:Issue|GH) [\s-]* (\d+) }xi) {
+        my $issue_url = "https://github.com/$project/issues/$issue_num";
+        my $title = URI::Title::title($issue_url);
+        return "Issue $issue_num ($title) - $issue_url";
     }
-    return 0; # This message didn't interest us
+
+    # Similarly, pull requests:
+    if (my($pr_num) = $mess->{body} =~ m{ (?:PR|pull request) [\s-]* (\d+) }xi) 
+    {
+        my $pull_url = "https://github.com/$project/pull/$pr_num";;
+        my $title = URI::Title::title($pull_url);
+        return "Pull request $pr_num ($title) - $pull_url";
+    }
+
+    
+    # OK, it's not something we want to respond to:
+    return 0;
 }
 
 
