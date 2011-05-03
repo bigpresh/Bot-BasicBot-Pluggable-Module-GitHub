@@ -1,0 +1,13 @@
+Revision history for Bot-BasicBot-Pluggable-Module-GitHub
+
+0.01    2011-05-03
+        First version.  These are modules I've been using in #dancer on
+        irc.perl.org, and I figured it would be helpful to package them up and
+        release them to CPAN.
+
+        I have further plans to implement, including a module to handle GitHub
+        hooks by spawning a super-basic web server on a configured port which
+        would receive JSON payloads from GitHub's hooks and do the appropriate
+        thing (announcing commits/changed issues/pull requests/etc)
+
+
