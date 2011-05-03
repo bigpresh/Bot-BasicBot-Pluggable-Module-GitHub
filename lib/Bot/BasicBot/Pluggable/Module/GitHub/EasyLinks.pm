@@ -6,9 +6,10 @@
 #
 # David Precious <davidp@preshweb.co.uk>
 
-package Bot::BasicBot::Pluggable::Module::EasyLinks;
+package Bot::BasicBot::Pluggable::Module::GitHub::EasyLinks;
 use strict;
-use base 'Bot::BasicBot::Pluggable::Module';
+use 'Bot::BasicBot::Pluggable::Module::GitHub';
+use base 'Bot::BasicBot::Pluggable::Module::GitHub';
 use LWP::Simple ();
 use JSON;
 
