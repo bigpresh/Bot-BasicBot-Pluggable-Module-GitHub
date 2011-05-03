@@ -1,5 +1,5 @@
 package Bot::BasicBot::Pluggable::Module::GitHub;
-use base 'Bot::BasicBot::Pluggable::Module::GitHub';
+use base 'Bot::BasicBot::Pluggable::Module';
 
 # This module is intended to be used as a base by the B::B::P::M::GitHub::*
 # modules, and provides some shared functionality (reading the default project
@@ -18,7 +18,7 @@ sub github_project {
     my ($self, $channel) = @_;
 
     my $projects = $self->get('user_github_project')
-        or return false;
+        or return;
 
     # The user may have provided channel-specific projects definitions in the
     # format:
@@ -30,7 +30,7 @@ sub github_project {
     my %repo_for_channel = map {
         split /[:]/
     } split /[;,]/, $projects;
-    return %repo_for_channel{$channel};
+    return $repo_for_channel{$channel};
 }
    
         
