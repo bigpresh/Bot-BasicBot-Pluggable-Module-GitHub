@@ -8,7 +8,7 @@
 
 package Bot::BasicBot::Pluggable::Module::GitHub::EasyLinks;
 use strict;
-use 'Bot::BasicBot::Pluggable::Module::GitHub';
+use Bot::BasicBot::Pluggable::Module::GitHub;
 use base 'Bot::BasicBot::Pluggable::Module::GitHub';
 use LWP::Simple ();
 use JSON;
