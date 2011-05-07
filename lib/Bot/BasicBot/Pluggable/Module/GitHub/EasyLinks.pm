@@ -34,7 +34,7 @@ sub said {
     return unless $pri == 2;
 
     # Firstly, do nothing if the message doesn't look at all interesting:
-    return 0 if $mess->{body} !~ /issue|pr|pull request/i;
+    return 0 if $mess->{body} !~ /issue|pr|pull request|[0-9a-f]{6,}/i;
 
     # OK, find out what project is appropriate for this channel (if there isn't
     # one, go no further)
@@ -72,7 +72,7 @@ sub said {
         # OK, take the first line of the commit message as a title:
         my $summary = (split /\n/, $commit->{message} )[0];
 
-        my $commit_url = "https://github.com" . $commit->{url};;
+        my $commit_url = "https://github.com" . $commit->{url};
         return "Commit $sha ($summary) - $commit_url";
     }
 
