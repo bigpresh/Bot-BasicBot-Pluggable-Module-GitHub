@@ -64,7 +64,10 @@ sub said {
             )
         );
         # If we got nothing back, assume it wasn't actually a valid SHA
-        return 0 if ! $commit;
+        if (!$commit) {
+            warn "No commit details for $project/$sha";
+            return 0;
+        }
 
         # OK, take the first line of the commit message as a title:
         my $summary = (split /\n/, $commit->{message} )[0];
