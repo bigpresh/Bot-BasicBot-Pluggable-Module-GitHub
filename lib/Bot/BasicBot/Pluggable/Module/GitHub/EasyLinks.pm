@@ -69,6 +69,8 @@ sub said {
             return 0;
         }
 
+        my $commit = $commit->{commit};  # ugh.
+
         # OK, take the first line of the commit message as a title:
         my $summary = (split /\n/, $commit->{message} )[0];
 
