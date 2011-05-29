@@ -38,8 +38,13 @@ sub said {
 
     # OK, find out what project is appropriate for this channel (if there isn't
     # one, go no further)
-    my $project = $self->github_project($mess->{channel})
-        or return 0;
+    my $chan_project = $self->github_project($mess->{channel});
+
+    # If it refers to a specific project, use that, if not, use the project for
+    # the channel instead.
+    my ($project) = $mess->{body} =~ m{ @ \s* (\S+/\S+/) };
+    $project ||= $chan_project;
+    return unless $project;
 
     # Handle issues, first
     if (my ($issue_num) = $mess->{body} =~ m{ (?:Issue|GH) [\s-]* (\d+) }xi) {
