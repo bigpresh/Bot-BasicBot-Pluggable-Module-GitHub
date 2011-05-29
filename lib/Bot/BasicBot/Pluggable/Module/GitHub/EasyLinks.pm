@@ -42,7 +42,7 @@ sub said {
 
     # If it refers to a specific project, use that, if not, use the project for
     # the channel instead.
-    my ($project) = $mess->{body} =~ m{ \@ \s* (\S+/\S+/) }x;
+    my ($project) = $mess->{body} =~ m{ \@ \s* (\S+/\S+) }x;
     $project ||= $chan_project;
     return unless $project;
 
