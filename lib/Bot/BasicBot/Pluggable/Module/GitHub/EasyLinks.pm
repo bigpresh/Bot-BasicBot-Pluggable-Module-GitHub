@@ -33,54 +33,71 @@ sub said {
     
     return unless $pri == 2;
 
-    # Firstly, do nothing if the message doesn't look at all interesting:
-    return 0 if $mess->{body} !~ /issue|pr|pull request|[0-9a-f]{6,}/i;
-
-    # OK, find out what project is appropriate for this channel (if there isn't
-    # one, go no further)
-    my $chan_project = $self->github_project($mess->{channel});
-
-    # If it refers to a specific project, use that, if not, use the project for
-    # the channel instead.
-    my ($project) = $mess->{body} =~ m{ \@ \s* (\S+/\S+) }x;
-    $project ||= $chan_project;
-    return unless $project;
-
+    # Loop through matching things in the message body, assembling quick links
+    # ready to return.
     my @return;
+    while ($mess->{body} =~ m{ 
+        (?:  
+            # "Issue 42", "PR 42" or "Pull Request 42"
+            (?<type> (?:issue|gh|pr|pull request) ) 
+            \s*
+            (?<num> \d+)
+        |                
+            # Or a commit SHA
+            (?<sha> [0-9a-f]{6,})
+        )    
+        # Possibly with a specific project repo ("user/repo") appeneded
+        (?: \s* \@ \s* (?<project> \w+/\w+) )?
+        }gxi
+    ) {
 
-    # Handle issues, first
-    if (my ($issue_num) = $mess->{body} =~ m{ (?:Issue|GH) [\s-]* (\d+) }xi) {
-        my $issue_url = "https://github.com/$project/issues/$issue_num";
-        my $title = URI::Title::title($issue_url);
-        push @return, "Issue $issue_num ($title) - $issue_url";
-    }
+        my $project = $+{project} || $self->github_project($mess->{channel});
+        next unless $project;
 
-    # Similarly, pull requests:
-    if (my($pr_num) = $mess->{body} =~ m{ (?:PR|pull request) [\s-]* (\d+) }xi) 
-    {
-        my $pull_url = "https://github.com/$project/pull/$pr_num";;
-        my $title = URI::Title::title($pull_url);
-        push @return, "Pull request $pr_num ($title) - $pull_url";
-    }
+        # First, extract what kind of thing we're looking at, and normalise it a
+        # little, then go on to handle it.
+        my $thing    = $+{thing};
+        my $thingnum = $+{num};
 
-    # If it looks likely to be a commit SHA (hex):
-    if (my($sha) = $mess->{body} =~ m{\b ([0-9a-f]{6,}) \b}x) {
-        my $commit = JSON::from_json(
-            LWP::Simple::get(
-                "https://github.com/api/v2/json/commits/show/$project/$sha"
-            )
-        );
-        # If we got nothing back, assume it wasn't actually a valid SHA
-        if ($commit) {
-            my $commit = $commit->{commit};  # ugh.
+        if ($+{sha}) {
+            $thing    = 'commit';
+            $thingnum = $+{sha};
+        }
 
-            # OK, take the first line of the commit message as a title:
-            my $summary = (split /\n/, $commit->{message} )[0];
+        # Right, handle it in the approriate way
+        if ($thing =~ /Issue|GH/i) {
+            my $issue_url = "https://github.com/$project/issues/$thingnum";
+            my $title = URI::Title::title($issue_url);
+            push @return, "Issue $thingnum ($title) - $issue_url";
+        }
 
-            my $commit_url = "https://github.com" . $commit->{url};
-            push @return, "Commit $sha ($summary) - $commit_url";
-        } else {
-            warn "No commit details for $project/$sha";
+        # Similarly, pull requests:
+        if ($thing =~ /(?:pr|pull request)/) {
+            my $pull_url = "https://github.com/$project/pull/$thingnum";
+            my $title = URI::Title::title($pull_url);
+            push @return, "Pull request $thingnum ($title) - $pull_url";
+        }
+
+        # If it was a commit:
+        if ($thing eq 'commit') {
+            my $commit = JSON::from_json(
+                LWP::Simple::get(
+                    "https://github.com/api/v2/json/commits/show/$project/$thingnum"
+                )
+            );
+            # If we got nothing back, assume it wasn't actually a valid SHA; if we
+            # got details, use them
+            if ($commit) {
+                my $commit = $commit->{commit};  # ugh.
+
+                # OK, take the first line of the commit message as a title:
+                my $summary = (split /\n/, $commit->{message} )[0];
+
+                my $commit_url = "https://github.com" . $commit->{url};
+                push @return, "Commit $thingnum ($summary) - $commit_url";
+            } else {
+                warn "No commit details for $project/$thingnum";
+            }
         }
     }
     
