@@ -47,7 +47,7 @@ sub said {
             (?<sha> [0-9a-f]{6,})
         )    
         # Possibly with a specific project repo ("user/repo") appeneded
-        (?: \s* \@ \s* (?<project> \w+/\w+) )?
+        (?: \s* \@ \s* (?<project> \S+/\S+) )?
         }gxi
     ) {
 
