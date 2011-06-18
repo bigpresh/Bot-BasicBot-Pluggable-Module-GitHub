@@ -39,7 +39,7 @@ sub said {
     while ($mess->{body} =~ m{ 
         (?:  
             # "Issue 42", "PR 42" or "Pull Request 42"
-            (?<type> (?:issue|gh|pr|pull request) ) 
+            (?<thing> (?:issue|gh|pr|pull request) ) 
             \s*
             (?<num> \d+)
         |                
