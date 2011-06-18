@@ -46,11 +46,13 @@ sub said {
     $project ||= $chan_project;
     return unless $project;
 
+    my @return;
+
     # Handle issues, first
     if (my ($issue_num) = $mess->{body} =~ m{ (?:Issue|GH) [\s-]* (\d+) }xi) {
         my $issue_url = "https://github.com/$project/issues/$issue_num";
         my $title = URI::Title::title($issue_url);
-        return "Issue $issue_num ($title) - $issue_url";
+        push @return, "Issue $issue_num ($title) - $issue_url";
     }
 
     # Similarly, pull requests:
@@ -58,7 +60,7 @@ sub said {
     {
         my $pull_url = "https://github.com/$project/pull/$pr_num";;
         my $title = URI::Title::title($pull_url);
-        return "Pull request $pr_num ($title) - $pull_url";
+        push @return, "Pull request $pr_num ($title) - $pull_url";
     }
 
     # If it looks likely to be a commit SHA (hex):
@@ -69,23 +71,20 @@ sub said {
             )
         );
         # If we got nothing back, assume it wasn't actually a valid SHA
-        if (!$commit) {
+        if ($commit) {
+            my $commit = $commit->{commit};  # ugh.
+
+            # OK, take the first line of the commit message as a title:
+            my $summary = (split /\n/, $commit->{message} )[0];
+
+            my $commit_url = "https://github.com" . $commit->{url};
+            push @return, "Commit $sha ($summary) - $commit_url";
+        } else {
             warn "No commit details for $project/$sha";
-            return 0;
         }
-
-        my $commit = $commit->{commit};  # ugh.
-
-        # OK, take the first line of the commit message as a title:
-        my $summary = (split /\n/, $commit->{message} )[0];
-
-        my $commit_url = "https://github.com" . $commit->{url};
-        return "Commit $sha ($summary) - $commit_url";
     }
-
     
-    # OK, it's not something we want to respond to:
-    return 0;
+    return join "\n", @return;
 }
 
 
