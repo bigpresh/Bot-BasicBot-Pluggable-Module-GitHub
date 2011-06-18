@@ -72,7 +72,7 @@ sub said {
         }
 
         # Similarly, pull requests:
-        if ($thing =~ /(?:pr|pull request)/) {
+        if ($thing =~ /(?:pr|pull request)/i) {
             my $pull_url = "https://github.com/$project/pull/$thingnum";
             my $title = URI::Title::title($pull_url);
             push @return, "Pull request $thingnum ($title) - $pull_url";
