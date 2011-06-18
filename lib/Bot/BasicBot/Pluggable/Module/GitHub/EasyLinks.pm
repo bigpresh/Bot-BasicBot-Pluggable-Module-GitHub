@@ -64,8 +64,11 @@ sub said {
             $thingnum = $+{sha};
         }
 
+        warn "OK, about to try to handle $thing $thingnum for $project";
+
         # Right, handle it in the approriate way
         if ($thing =~ /Issue|GH/i) {
+            warn "Handling issue $thingnum";
             my $issue_url = "https://github.com/$project/issues/$thingnum";
             my $title = URI::Title::title($issue_url);
             push @return, "Issue $thingnum ($title) - $issue_url";
@@ -73,6 +76,7 @@ sub said {
 
         # Similarly, pull requests:
         if ($thing =~ /(?:pr|pull request)/i) {
+            warn "Handling pull request $thingnum";
             my $pull_url = "https://github.com/$project/pull/$thingnum";
             my $title = URI::Title::title($pull_url);
             push @return, "Pull request $thingnum ($title) - $pull_url";
@@ -80,6 +84,7 @@ sub said {
 
         # If it was a commit:
         if ($thing eq 'commit') {
+            warn "Handling commit $thingnum";
             my $commit = JSON::from_json(
                 LWP::Simple::get(
                     "https://github.com/api/v2/json/commits/show/$project/$thingnum"
