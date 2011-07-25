@@ -32,7 +32,20 @@ sub github_project {
     } split /[;,]/, $projects;
     return $repo_for_channel{$channel};
 }
-   
+
+
+# For each channel the bot is in, call github_project() to find out what project
+# is appropriate for that channel, and return a hashref of channel => projet.
+sub channels_and_projects {
+    my $self = shift;
+    my %project_for_channel; 
+    for my $channel ($self->channels) {
+        if (my $project = $self->github_project($channel)) {
+            $project_for_channel{$channel} = $project;
+        }
+    }
+    return \%project_for_channel;
+}
         
 
 
