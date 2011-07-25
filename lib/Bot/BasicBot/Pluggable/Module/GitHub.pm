@@ -39,7 +39,7 @@ sub github_project {
 sub channels_and_projects {
     my $self = shift;
     my %project_for_channel; 
-    for my $channel ($self->channels) {
+    for my $channel ($self->bot->channels) {
         if (my $project = $self->github_project($channel)) {
             $project_for_channel{$channel} = $project;
         }
