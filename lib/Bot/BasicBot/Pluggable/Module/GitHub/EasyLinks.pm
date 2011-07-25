@@ -71,6 +71,7 @@ sub said {
             warn "Handling issue $thingnum";
             my $issue_url = "https://github.com/$project/issues/$thingnum";
             my $title = URI::Title::title($issue_url);
+            $title =~ s/ - Issues - \Q$project\E - GitHub//;
             push @return, "Issue $thingnum ($title) - $issue_url";
         }
 
