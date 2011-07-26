@@ -21,8 +21,14 @@ HELPMSG
 
 sub tick {
     my $self = shift;
+
+    my $issue_state_file = 'last-issues-state.json';
+    
+    warn "Checking if it's time to process issues";
     my $seconds_between_checks = $self->get('announce_poll') || 20;
+    warn "OK, seconds_between_checks will be $seconds_between_checks";
     return if time - $self->get('announce_poll') < $seconds_between_checks;
+    warn "Yeah, it's time.";
 
     warn "OK, going ahead";
     use Data::Dump;
@@ -30,7 +36,15 @@ sub tick {
         Data::Dump::dump( $self->channels_and_projects );
 
     # Grab details of the issues we know about already:
-    my $seen_issues = $self->get('seen_issues') || {};
+    # Have to handle storing & loading old issue state myself - I don't know
+    # why, but the bot storage doesn't want to work for this.
+    open my $fh, '<', $issue_state_file
+        or die "Failed to open $issue_state_file - $!";
+    my $json;
+    { local $/; $json = <$fh> }
+    close $fh;
+    my $seen_issues = $json ? JSON::from_json($json) : {};
+
     warn "Issues loaded:", Data::Dump::dump($seen_issues);
 
     # OK, for each channel, pull details of all issues from the API, and look
@@ -108,13 +122,14 @@ sub tick {
 
     #warn "Storing updated issue details: ",
     #    Data::Dump::dump($seen_issues);
-
+    my $store_json = JSON::to_json($seen_issues);
+    warn "Storing updated seen_issues: $store_json";
     # Store the updated issue details:
-    # $self->set('seen_issues', $seen_issues);
-    use Storable;
-    my $data = Storable::nstore($seen_issues);
-    warn "Data to store:", $data;
-    $self->set('seen_issues', $data);
+    open my $storefh, '>', $issue_state_file
+        or die "Failed to write to $issue_state_file - $!";
+    print {$storefh} $store_json;
+    close $storefh;
+    return;
 
 }
 
