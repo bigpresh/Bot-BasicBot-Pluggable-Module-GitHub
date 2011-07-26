@@ -108,8 +108,6 @@ sub tick {
             warn "Would tell $channel about $type issues " 
                 . join ',', map { $_->[0] } @{ $notifications{$type} };
 
-            next; # don't spam IRC while finding initial sates
-
             $self->say(
                 channel => $channel,
                 body => "Issue$s $type : "
