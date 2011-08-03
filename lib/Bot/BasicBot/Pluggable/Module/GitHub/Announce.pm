@@ -24,17 +24,9 @@ sub tick {
 
     my $issue_state_file = 'last-issues-state.json';
     
-    warn "Checking if it's time to process issues";
     my $seconds_between_checks = $self->get('poll_issues_interval') || 60 * 5;
-    warn "OK, seconds_between_checks will be $seconds_between_checks";
     return if time - $self->get('last_issues_poll') < $seconds_between_checks;
     $self->set('last_issues_poll', time);
-    warn "Yeah, it's time.";
-
-    warn "OK, going ahead";
-    use Data::Dump;
-    warn "channels_and_projects : ", 
-        Data::Dump::dump( $self->channels_and_projects );
 
     # Grab details of the issues we know about already:
     # Have to handle storing & loading old issue state myself - I don't know
@@ -46,7 +38,6 @@ sub tick {
     close $fh;
     my $seen_issues = $json ? JSON::from_json($json) : {};
 
-    warn "Issues loaded:", Data::Dump::dump($seen_issues);
 
     # OK, for each channel, pull details of all issues from the API, and look
     # for changes
@@ -106,9 +97,6 @@ sub tick {
         for my $type (keys %notifications) {
             my $s = scalar $notifications{$type} > 1 ? 's':'';
 
-            warn "Would tell $channel about $type issues " 
-                . join ',', map { $_->[0] } @{ $notifications{$type} };
-
             $self->say(
                 channel => $channel,
                 body => "Issue$s $type : "
@@ -119,10 +107,7 @@ sub tick {
         }
     }
 
-    #warn "Storing updated issue details: ",
-    #    Data::Dump::dump($seen_issues);
     my $store_json = JSON::to_json($seen_issues);
-    warn "Storing updated seen_issues: $store_json";
     # Store the updated issue details:
     open my $storefh, '>', $issue_state_file
         or die "Failed to write to $issue_state_file - $!";
