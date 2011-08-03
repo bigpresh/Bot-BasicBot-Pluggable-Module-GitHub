@@ -27,7 +27,7 @@ sub tick {
     warn "Checking if it's time to process issues";
     my $seconds_between_checks = $self->get('poll_issues_interval') || 60 * 5;
     warn "OK, seconds_between_checks will be $seconds_between_checks";
-    return if time - $self->get('list_issues_poll') < $seconds_between_checks;
+    return if time - $self->get('list_issues_poll') > $seconds_between_checks;
     $self->set('last_issues_poll', time);
     warn "Yeah, it's time.";
 
