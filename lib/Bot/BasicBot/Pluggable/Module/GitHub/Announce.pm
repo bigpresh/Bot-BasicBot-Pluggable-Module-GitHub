@@ -66,11 +66,16 @@ sub tick {
                 }
             } else {
                 # A new issue we haven't seen before
+                my $details = {
+                    title      => $issue->{title},
+                    url        => $issue->{html_url},
+                    created_by => $issue->{user},
+                };
                 push @{ $notifications{opened} },
-                    [ $issuenum, $issue->{title} ];
+                    [ $issuenum, $details ];
                 $seen_issues->{$project}{$issuenum} = {
                     state => 'open',
-                    title => $issue->{title},
+                    details => $details,
                 };
             }
         }
@@ -88,7 +93,7 @@ sub tick {
                 # It was open before, but isn't in the list now - it must have
                 # been closed.
                 push @{ $notifications{closed} },
-                    [ $issuenum, $existing->{title} ];
+                    [ $issuenum, $existing->{details} ];
                 $existing->{state} = 'closed';
             }
         }
@@ -101,7 +106,9 @@ sub tick {
                 channel => $channel,
                 body => "Issue$s $type : "
                     . join ', ', map { 
-                        sprintf "%d (%s)", @$_
+                        sprintf "%d (%s) by %s : %s", 
+                        $_->[0], # issue number
+                        @{$_->[1]}{qw(title created_by url)}
                     } @{ $notifications{$type} }
             );
         }
