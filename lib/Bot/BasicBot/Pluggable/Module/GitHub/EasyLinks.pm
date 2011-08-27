@@ -1,9 +1,6 @@
 # A quick Bot::BasicBot::Pluggable module to provide easy links when someone
 # mentions an issue / pull request / commit.
 #
-# Use the vars module to configure the project in question.  (So, this will only
-# really be of use to a bot in a single-project-related channel.)
-#
 # David Precious <davidp@preshweb.co.uk>
 
 package Bot::BasicBot::Pluggable::Module::GitHub::EasyLinks;
@@ -40,7 +37,7 @@ sub said {
         (?:  
             # "Issue 42", "PR 42" or "Pull Request 42"
             (?<thing> (?:issue|gh|pr|pull request) ) 
-            \s*
+            (:\s+|-)?
             (?<num> \d+)
         |                
             # Or a commit SHA
