@@ -37,7 +37,7 @@ sub said {
         (?:  
             # "Issue 42", "PR 42" or "Pull Request 42"
             (?<thing> (?:issue|gh|pr|pull request) ) 
-            (:\s+|-)?
+            (?:\s+|-)?
             (?<num> \d+)
         |                
             # Or a commit SHA
