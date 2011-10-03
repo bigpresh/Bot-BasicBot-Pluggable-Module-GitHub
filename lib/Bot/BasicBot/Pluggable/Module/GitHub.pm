@@ -16,31 +16,47 @@ our $VERSION = '0.01';
 # We'll cache suitably-configured Net::GitHub objects for each channel.
 my %net_github;
 
-# Given a channel name, return a suitably-configured Net::GitHub::V2 object
+# Given a channel name or a user/project, return a suitably-configured 
+# Net::GitHub::V2 object.
+# If a channel name is given, we'll look up the default project stored for that
+# channel; if a user/project is given, we'll just use that.
+# We'll then see if we have authentication details stored to use, and use them
+# if appropriate.
 sub ng {
-    my ($self, $channel) = @_;
-    if (my $ng = $net_github{$channel}) {
+    my ($self, $channelorproject) = @_;
+
+
+    # Work out the repo we're using - we may have been given "user/repo", or, if
+    # we were given a channel name, look up the default repo for that channel
+    my ($user,$project);
+    if ($channelorproject =~ m{/}) {
+        ($user, $project) = split '/', $channelorproject, 2;
+    } else {
+        my $chanproject = $self->project_for_channel($channelorproject);
+        ($user, $project) = split '/', $chanproject, 2;
+    }
+    
+    return unless $user && $project;
+
+    # If we've already got a suitable Net::GitHub::V2 object, use it:
+    if (my $ng = $net_github{"$user/$project"}) {
         return $ng;
     }
 
-    my $chanproject = $self->project_for_channel($channel);
-    return unless $chanproject;
-
-    my ($user, $project) = split '/', $chanproject, 2;
-
+    # Right - assemble the params we need to give to Net::GitHub::V2
     my %ngparams = (
         owner => $user,
         repo  => $project,
     );
 
     # If authentication is needed, add that in too:
-    if (my $auth = $self->auth_for_channel($channel)) {
+    if (my $auth = $self->auth_for_project("$user/$project")) {
         my ($user, $token) = split /:/, $auth, 2;
         $ngparams{login} = $user;
         $ngparams{token} = $token;
         $ngparams{always_Authorization} = 1;
     }
-    return $net_github{$channel} = Net::GitHub::V2->new(%ngparams);
+    return $net_github{"$user/$project"} = Net::GitHub::V2->new(%ngparams);
 }
 
 
@@ -59,12 +75,12 @@ sub github_project {
 }
 
 # Find auth details to use to access a channel's project
-sub auth_for_channel {
-    my ($self, $channel) = @_;
+sub auth_for_project {
+    my ($self, $project) = @_;
 
-    my $auth_for_channel = 
-        $self->store->get('GitHub', 'auth_for_channel');
-    return $auth_for_channel->{$channel};
+    my $auth_for_project = 
+        $self->store->get('GitHub', 'auth_for_project');
+    return $auth_for_project->{$project};
 }
 
 
@@ -104,16 +120,16 @@ sub said {
             'GitHub', 'project_for_channel', $project_for_channel
         );
 
-        my $auth_for_channel =
-            $self->store->get('GitHub', 'auth_for_channel') || {};
-        $auth_for_channel->{$+{channel}} = $+{auth};
+        my $auth_for_project =
+            $self->store->get('GitHub', 'auth_for_project') || {};
+        $auth_for_project->{$+{project}} = $+{auth};
         $self->store->set(
-            'GitHub', 'auth_for_channel', $auth_for_channel
+            'GitHub', 'auth_for_project', $auth_for_project
         );
 
         # Invalidate any cached Net::GitHub object we might have, so the new
         # settings are used
-        delete $net_github{$+{channel}};
+        delete $net_github{$+{project}};
 
     } elsif ($mess->{body} =~ /^!setgithubproject/i) {
         return "Invalid usage.   Try '!help github'";
