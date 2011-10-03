@@ -7,6 +7,7 @@ package Bot::BasicBot::Pluggable::Module::GitHub::Announce;
 use strict;
 use Bot::BasicBot::Pluggable::Module::GitHub;
 use base 'Bot::BasicBot::Pluggable::Module::GitHub';
+use JSON;
 
 our $VERSION = 0.01;
  
