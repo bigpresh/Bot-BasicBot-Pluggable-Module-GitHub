@@ -8,7 +8,6 @@ use base 'Bot::BasicBot::Pluggable::Module';
 # It should not be loaded directly by the bot; load the desired modules you
 # want.
 
-use warnings;
 use strict;
 
 our $VERSION = '0.01';
