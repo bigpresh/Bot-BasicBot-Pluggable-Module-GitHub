@@ -9,6 +9,7 @@ use base 'Bot::BasicBot::Pluggable::Module';
 # want.
 
 use strict;
+use Net::GitHub::V2;
 
 our $VERSION = '0.01';
 
