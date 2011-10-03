@@ -99,14 +99,14 @@ sub said {
         my $project_for_channel = 
             $self->store->get('GitHub','project_for_channel') || {};
         $project_for_channel->{$+{channel}} = $+{project};
-        $self->store->store(
+        $self->store->set(
             'GitHub', 'project_for_channel', $project_for_channel
         );
 
         my $auth_for_channel =
             $self->store->get('GitHub', 'auth_for_channel') || {};
         $auth_for_channel->{$+{channel}} = $+{auth};
-        $self->store->store(
+        $self->store->set(
             'GitHub', 'project_for_channel', $auth_for_channel
         );
 
