@@ -54,7 +54,7 @@ sub said {
 
         # Get the Net::GitHub::V2 object we'll be using.  (If we don't get one,
         # for some reason, we can't do anything useful.)
-        my $ng = $self->ng($mess->{channel}) or return;
+        my $ng = $self->ng($project) or return;
 
         # First, extract what kind of thing we're looking at, and normalise it a
         # little, then go on to handle it.

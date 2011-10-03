@@ -47,7 +47,7 @@ sub tick {
         my %notifications;
         warn "Looking for issues for $project for $channel";
 
-        my $ng = $self->ng($channel) or next channel;
+        my $ng = $self->ng($project) or next channel;
 
         my $issues = $ng->issue->list('open');
 
