@@ -7,8 +7,6 @@ package Bot::BasicBot::Pluggable::Module::GitHub::Announce;
 use strict;
 use Bot::BasicBot::Pluggable::Module::GitHub;
 use base 'Bot::BasicBot::Pluggable::Module::GitHub';
-use LWP::Simple (); 
-use JSON;
 
 our $VERSION = 0.01;
  
@@ -42,19 +40,18 @@ sub tick {
     # OK, for each channel, pull details of all issues from the API, and look
     # for changes
     my $channels_and_projects = $self->channels_and_projects;
+    channel:
     for my $channel (keys %$channels_and_projects) {
         my $project = $channels_and_projects->{$channel};
         my %notifications;
         warn "Looking for issues for $project for $channel";
 
-        my $issues_json = LWP::Simple::get(
-            "https://github.com/api/v2/json/issues/list/$project/open"
-        ) or warn "Failed to fetch issues for $project" and return;
-        my $issues = JSON::from_json($issues_json)
-            or warn "Failed to parse issues for $project" and return;
+        my $ng = $self->ng($channel) or next channel;
+
+        my $issues = $ng->issue->list('open');
 
         # Go through all currently-open issues and look for new/reopened ones
-        for my $issue (@{ $issues->{issues} }) {
+        for my $issue (@$issues) {
             my $issuenum = $issue->{number};
             if (my $existing = $seen_issues->{$project}{$issuenum}) {
                 if ($existing->{state} eq 'closed') {
@@ -87,7 +84,7 @@ sub tick {
             my $existing = $seen_issues->{$project}{$issuenum};
             my $current = grep { 
                 $_->{number} == $issuenum 
-            } @{ $issues->{issues} };
+            } @$issues;
 
             if ($existing->{state} eq 'open' && !$current) {
                 # It was open before, but isn't in the list now - it must have
