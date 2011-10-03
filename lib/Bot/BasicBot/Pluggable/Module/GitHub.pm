@@ -108,7 +108,7 @@ sub said {
             $self->store->get('GitHub', 'auth_for_channel') || {};
         $auth_for_channel->{$+{channel}} = $+{auth};
         $self->store->set(
-            'GitHub', 'project_for_channel', $auth_for_channel
+            'GitHub', 'auth_for_channel', $auth_for_channel
         );
 
         # Invalidate any cached Net::GitHub object we might have, so the new
