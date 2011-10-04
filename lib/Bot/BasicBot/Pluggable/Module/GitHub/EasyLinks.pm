@@ -72,8 +72,8 @@ sub said {
         if ($thing =~ /Issue|GH/i) {
             warn "Handling issue $thingnum";
             my $issue = $ng->issue->view($thingnum);
-            if (!$issue) {
-                push @return, "Issue $thingnum not found?";
+            if (!exists $issue->{error}) {
+                push @return, $issue->{error};
                 next match;
             }
             push @return, sprintf "Issue %d (%s) - %s",
