@@ -142,6 +142,19 @@ sub said {
 
 Bot::BasicBot::Pluggable::Module::GitHub - GitHub-related modules for IRC bots running Bot::BasicBot::Pluggable
 
+=head1 DESCRIPTION
+
+A set of modules for L<Bot::BasicBot::Pluggable> bots, providing useful
+GitHub-related functionality.
+
+If your team use GitHub and colloborate on IRC, these may well be of interest to
+you.  They're already in use on the L<Dancer> project's IRC channel, and
+internally at my workplace, UK2.
+
+Most communication with GitHub uses L<Net::GitHub::V2>, and can use
+authentication with an API key for private repositories.
+
+
 =head1 MODULES
 
 The following modules are included - see the documentation for each for more 
@@ -172,6 +185,23 @@ You can also explicitly tell it to look at any other GitHub project:
 
 Monitor pull requests for GitHub projects.
 
+Example:
+
+  <@bigpresh> !pr
+  < sophie> Open pull requests for sukria/Dancer : 8 pull requests open
+            (felixdo:3, perlpilot:1, jamhed:1, dams:1, ambs:1, JTimothyKing:1)
+
+=item L<Bot::BasicBot::Pluggable::Module::GitHub::Announce>
+
+Announces issues raised/closed for each channel's default project.
+
+Periodically checks on issues for each project, and reports changes, for
+example:
+
+  < sophie> Issues closed : 667 (YAML::XS for Session::YAML) by jamhed :
+            https://github.com/sukria/Dancer/issues/667
+
+
 =back
 
 =head1 Loading modules
@@ -179,7 +209,9 @@ Monitor pull requests for GitHub projects.
 See the L<Bot::BasicBot::Pluggable> documentation for how to load these modules
 into your bot.
 
-Do not load this module directly; load the modules named above individually.
+Do not load this module directly; load the modules named above individually, to
+get just the functionality you require.
+
 This module is intended only to provide a base for the other modules, including
 shared functionality and common documentation.
 
@@ -215,6 +247,14 @@ L<https://github.com/account/admin>
 =head1 AUTHOR
 
 David Precious C<<davidp@preshweb.co.uk>>
+
+=head1 ACKNOWLEDGEMENTS
+
+James Ronan C<<james@ronanweb.co.uk>>
+
+=head1 CONTRIBUTING
+
+Contributions are very welcome.
 
 
 =head1 LICENSE AND COPYRIGHT
