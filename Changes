@@ -1,5 +1,11 @@
 Revision history for Bot-BasicBot-Pluggable-Module-GitHub
 
+{{NEXT} 2011-????
+        Bugfix: check for failure properly before attempting to announce a
+        commit.  (Previously we checked we got something non-false back; if we
+        asked for a commit that wasn't found, we get a hashref with an error
+        key, so check for that.)
+
 0.01    2011-10-05
         About time this was released; it's proven itself in #dancer on
         irc.perl.org, and internally at my workplace, and I figured it would be 
