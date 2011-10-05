@@ -144,18 +144,33 @@ Bot::BasicBot::Pluggable::Module::GitHub - GitHub-related modules for IRC bots r
 
 =head1 MODULES
 
-The following modules are included - see the documentation for each for details
-on how to use them.
+The following modules are included - see the documentation for each for more 
+details on how to use them.
 
 =over 4
+
+=item L<Bot::BasicBot::Pluggable::Module::GitHub::EasyLinks>
+
+Provide quick URLs to view issues/pull requests etc when someone mentions one -
+for example:
+
+  <user> Go have a look at Issue 42
+  <bot1> Issue 42 (It doesn't work) https://github.com/....
+  <user> I fixed that in 5fcbb01
+  <bot1> Commit 5fcbb01 (Retarded logic fail.) - https://github.com/....
+ 
+You can set a default project per-channel, so the above examples will look at
+whatever project is set as default for the channel the message was in.
+ 
+You can also explicitly tell it to look at any other GitHub project:
+ 
+  <user> 5fcbb01 @ bigpresh/Bot-BasicBot-Pluggable-Module-GitHub
+  <bot1> Commit 5fcbb01 (Retarded logic fail.) - https://github.com/...
+
 
 =item L<Bot::BasicBot::Pluggable::Module::GitHub::PullRequests>
 
 Monitor pull requests for GitHub projects.
-
-=item L<Bot::BasicBot::Pluggable::Module::GitHub::EasyLinks>
-
-Provide quick URLs to view issues/pull requests etc.
 
 =back
 
