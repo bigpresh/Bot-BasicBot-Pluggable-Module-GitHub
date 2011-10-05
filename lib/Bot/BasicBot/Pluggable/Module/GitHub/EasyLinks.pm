@@ -36,6 +36,7 @@ sub said {
     match:
     while ($mess->{body} =~ m{ 
         (?:  
+            \b
             # "Issue 42", "PR 42" or "Pull Request 42"
             (?<thing> (?:issue|gh|pr|pull request) ) 
             (?:\s+|-)?
