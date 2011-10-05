@@ -98,7 +98,7 @@ sub said {
         if ($thing eq 'commit') {
             warn "Handling commit $thingnum";
             my $commit = $ng->commit->show($thingnum);
-            if ($commit && !$commit->{error}) {
+            if ($commit && !exists $commit->{error}) {
                 my $title = ( split /\n+/, $commit->{message} )[0];
                 my $url = $commit->{url};
                 
