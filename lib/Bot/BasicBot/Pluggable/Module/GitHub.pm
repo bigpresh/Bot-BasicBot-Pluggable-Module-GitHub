@@ -110,8 +110,8 @@ sub said {
     if ($mess->{body} =~ m{
         ^!setgithubproject \s+
         (?<channel> \#\S+ ) \s+
-        (?<project> \S+   ) \s+
-        (?<auth>    \S+   )?
+        (?<project> \S+   )
+        ( \s+ (?<auth>  \S+ ) )?
     }xi) {
         my $project_for_channel = 
             $self->store->get('GitHub','project_for_channel') || {};
