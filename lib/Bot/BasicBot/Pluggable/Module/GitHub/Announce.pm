@@ -9,7 +9,7 @@ use Bot::BasicBot::Pluggable::Module::GitHub;
 use base 'Bot::BasicBot::Pluggable::Module::GitHub';
 use JSON;
 
-our $VERSION = 0.01;
+our $VERSION = 0.02;
  
 sub help {
     return <<HELPMSG;

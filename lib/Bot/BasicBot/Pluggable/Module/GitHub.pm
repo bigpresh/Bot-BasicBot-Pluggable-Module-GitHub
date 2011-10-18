@@ -11,7 +11,7 @@ use base 'Bot::BasicBot::Pluggable::Module';
 use strict;
 use Net::GitHub::V2;
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 # We'll cache suitably-configured Net::GitHub objects for each channel.
 my %net_github;
