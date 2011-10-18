@@ -91,7 +91,13 @@ sub auth_for_project {
 
     my $auth_for_project = 
         $self->store->get('GitHub', 'auth_for_project');
-    return $auth_for_project->{$project};
+
+    if ($auth_for_project->{$project}) {
+        return $auth_for_project->{$project};
+    } else {
+        # Return the default auth, if set
+        return $self->store->get('GitHub', 'default_auth');
+    }
 }
 
 
@@ -119,43 +125,64 @@ sub said {
     return unless $mess->{address} eq 'msg';
     
     if ($mess->{body} =~ m{
-        ^!setgithubproject \s+
+        ^!setgithubprojects \s+
         (?<channel> \#\S+ ) \s+
-        (?<project> \S+   )
-        ( \s+ (?<auth>  \S+ ) )?
+        (\S+\/\S+)+
     }xi) {
+        my $channel = $+{channel};
+        my $message = "OK, set projects for $channel: ";
         my $projects_for_channel = 
             $self->store->get('GitHub','projects_for_channel') || {};
+        $projects_for_channel->{$channel} = []; #set to empty
 
-        if($projects_for_channel->{$+{channel}}) {
-            push(@{$projects_for_channel->{$+{channel}}}, $+{project});
-        } else {
-            $projects_for_channel->{$+{channel}} = [ $+{project} ];
+        while($mess->{body} =~ m{
+                \b(?<project> \S+\/\S+ )
+            }gxi)
+        {
+            my $project = $+{project};
+            push(@{$projects_for_channel->{$channel}}, $project);
+            # Invalidate any cached Net::GitHub object we might have,
+            # so the new settings are used
+            delete $net_github{$project};
+            $message .= " $project";
         }
 
         $self->store->set(
             'GitHub', 'projects_for_channel', $projects_for_channel
         );
 
+        return $message;
+    } elsif ($mess->{body} =~ /^!setgithubproject/i) {
+        return "Invalid usage.   Try '!help github'";
+    } elsif ($mess->{body} =~ m{
+        ^!setdefaultauth \s+
+        (?<auth>  \S+ )
+    }xi) {
+        $self->store->set('GitHub', 'default_auth', $+{auth});
+        return "Set default auth credentials for all projects";
+    } elsif ($mess->{body} =~ /^!setdefaultauth/i) {
+        return "Invalid usage.   Try '!help github'";
+    } elsif ($mess->{body} =~ m{
+        ^!setauthforproject \s+
+        (?<project> \S+\/\S+) \s+
+        (?<auth>  \S+ )
+    }xi) {
+        my ($project, $auth) = ($+{project}, $+{auth});
         my $auth_for_project =
             $self->store->get('GitHub', 'auth_for_project') || {};
-        $auth_for_project->{$+{project}} = $+{auth};
+        $auth_for_project->{$project} = $auth;
         $self->store->set(
             'GitHub', 'auth_for_project', $auth_for_project
         );
-
-        # Invalidate any cached Net::GitHub object we might have, so the new
-        # settings are used
-        delete $net_github{$+{project}};
-
-        my $message = "OK, project for $+{channel} set to $+{project}";
-        if ($+{auth}) {
-            $message .= " (using auth details supplied)";
-        }
-        return $message;
-
-    } elsif ($mess->{body} =~ /^!setgithubproject/i) {
+        return "Set auth credentials for $project";
+    } elsif ($mess->{body} =~ /^!setauthforproject/i) {
         return "Invalid usage.   Try '!help github'";
+    } elsif ($mess->{body} =~ /^!addgithubproject/i) {
+        #TODO:
+        return "Not Implemented!"
+    } elsif ($mess->{body} =~ /^!deletegithubproject/i) {
+        #TODO:
+        return "Not Implemented!"
     } elsif ($mess->{body} =~ /^!showgithubprojects/i){
         my $message;
         my $projects_for_channel = 

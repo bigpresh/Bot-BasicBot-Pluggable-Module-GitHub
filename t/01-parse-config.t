@@ -19,6 +19,11 @@ sub get {
     return unless $namespace eq 'GitHub';
     return $self->{settings}{$key};
 }
+sub set {
+    my ($self, $namespace, $key, $value) = @_;
+    return unless $namespace eq 'GitHub';
+    $self->{settings}{$key} = $value;
+}
 
 
 # Subclass to override fetching of config setting from store
@@ -40,7 +45,7 @@ use Bot::BasicBot::Pluggable::Module::GitHub;
 
 
 package main;
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 my $plugin = MockBot->new;
 
@@ -77,3 +82,9 @@ is($plugin->auth_for_project('fake/project'), undef,
     'Got undef auth info for non-configured project'
 );
 
+# Test default_auth if set
+$plugin->{_store}->set('GitHub', 'default_auth', 'default:auth');
+
+is($plugin->auth_for_project('someuser/foo'), 'default:auth',
+    'Got expected default auth info for a project'
+);
