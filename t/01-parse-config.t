@@ -40,15 +40,15 @@ use Bot::BasicBot::Pluggable::Module::GitHub;
 
 
 package main;
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 my $plugin = MockBot->new;
 
 # Set some projects for channels, then we can test we get the right info back
 $plugin->{_store} = MockStore->new({
-    project_for_channel => {
-        '#foo' => 'someuser/foo',
-        '#bar' => 'bobby/tables',
+    projects_for_channel => {
+        '#foo' =>  [ 'someuser/foo' ],
+        '#bar' => [ 'bobby/tables', 'tom/drinks' ] ,
     },
     auth_for_project => {
         'bobby/tables' => 'bobby:tables',
@@ -57,11 +57,16 @@ $plugin->{_store} = MockStore->new({
 
 
 
-is($plugin->project_for_channel('#foo'), 'someuser/foo',
+is_deeply ($plugin->projects_for_channel('#foo'), [ 'someuser/foo' ],
     'Got expected project for a channel'
 );
 
-is($plugin->project_for_channel('#fake'), undef,
+is_deeply ($plugin->projects_for_channel('#bar'),
+    [ 'bobby/tables', 'tom/drinks' ],
+    'Got expected projects for a channel'
+);
+
+is($plugin->projects_for_channel('#fake'), undef,
     'Got undef project for non-configured channel'
 );
 

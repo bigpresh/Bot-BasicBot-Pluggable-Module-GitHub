@@ -28,50 +28,61 @@ sub ng {
 
     # Work out the repo we're using - we may have been given "user/repo", or, if
     # we were given a channel name, look up the default repo for that channel
-    my ($user,$project);
+    my ($user, $project);
     if ($channelorproject =~ m{/}) {
         ($user, $project) = split '/', $channelorproject, 2;
     } else {
-        my $chanproject = $self->project_for_channel($channelorproject);
-        ($user, $project) = split '/', $chanproject, 2;
+        my $chanprojects = $self->project_for_channel($channelorproject) || [];
+        ($user, $project) = split '/', @$chanprojects[0], 2;
     }
     
     return unless $user && $project;
 
-    # If we've already got a suitable Net::GitHub::V2 object, use it:
     if (my $ng = $net_github{"$user/$project"}) {
         return $ng;
     }
 
-    # Right - assemble the params we need to give to Net::GitHub::V2
     my %ngparams = (
         owner => $user,
         repo  => $project,
     );
-
     # If authentication is needed, add that in too:
     if (my $auth = $self->auth_for_project("$user/$project")) {
-        my ($user, $token) = split /:/, $auth, 2;
-        $ngparams{login} = $user;
+        my ($auth_user, $token) = split /:/, $auth, 2;
+        $ngparams{login} = $auth_user;
         $ngparams{token} = $token;
         $ngparams{always_Authorization} = 1;
     }
+
     return $net_github{"$user/$project"} = Net::GitHub::V2->new(%ngparams);
 }
 
 
-# Find the name of the GitHub project for a given channel
-sub project_for_channel {
+# Find all of the GitHub projects for a given channel
+sub projects_for_channel {
     my ($self, $channel) = @_;
 
-    my $project_for_channel =
-        $self->store->get('GitHub', 'project_for_channel');
-    return $project_for_channel->{$channel};
+    my $projects_for_channel =
+        $self->store->get('GitHub', 'projects_for_channel');
+    return $projects_for_channel->{$channel};
 }
 # Alias for backwards compatibility
 sub github_project {
     my $self = shift;
-    $self->project_for_channel(@_);
+    my $projects = $self->projects_for_channel(@_);
+    return @$projects[0] if $projects;
+    return undef;
+}
+
+# Accept a search term and return the first project that matches
+sub search_projects {
+    my ($self, $channel, $search) = @_;
+    my $projects = $self->projects_for_channel($channel);
+    return unless $projects;
+
+    for (@$projects) {
+        return $_ if $_ =~ /$search/i;
+    }
 }
 
 # Find auth details to use to access a channel's project
@@ -84,18 +95,18 @@ sub auth_for_project {
 }
 
 
-# For each channel the bot is in, call project_for_channel() to find out what 
-# project is appropriate for that channel, and return a hashref of 
-# channel => project (leaving out channels for which no project is defined)
+# For each channel the bot is in, call projects_for_channel() to find out what 
+# projects are appropriate for that channel, and return a hashref of 
+# channel => projects (leaving out channels for which no project is defined)
 sub channels_and_projects {
     my $self = shift;
-    my %project_for_channel; 
+    my %projects_for_channel; 
     for my $channel ($self->bot->channels) {
-        if (my $project = $self->project_for_channel($channel)) {
-            $project_for_channel{$channel} = $project;
+        if (my $projects = $self->projects_for_channel($channel)) {
+            $projects_for_channel{$channel} = $projects;
         }
     }
-    return \%project_for_channel;
+    return \%projects_for_channel;
 }
 
 # Support configuring project details for a channel (potentially with auth
@@ -113,11 +124,17 @@ sub said {
         (?<project> \S+   )
         ( \s+ (?<auth>  \S+ ) )?
     }xi) {
-        my $project_for_channel = 
-            $self->store->get('GitHub','project_for_channel') || {};
-        $project_for_channel->{$+{channel}} = $+{project};
+        my $projects_for_channel = 
+            $self->store->get('GitHub','projects_for_channel') || {};
+
+        if($projects_for_channel->{$+{channel}}) {
+            push(@{$projects_for_channel->{$+{channel}}}, $+{project});
+        } else {
+            $projects_for_channel->{$+{channel}} = [ $+{project} ];
+        }
+
         $self->store->set(
-            'GitHub', 'project_for_channel', $project_for_channel
+            'GitHub', 'projects_for_channel', $projects_for_channel
         );
 
         my $auth_for_project =
@@ -139,6 +156,14 @@ sub said {
 
     } elsif ($mess->{body} =~ /^!setgithubproject/i) {
         return "Invalid usage.   Try '!help github'";
+    } elsif ($mess->{body} =~ /^!showgithubprojects/i){
+        my $message;
+        my $projects_for_channel = 
+            $self->store->get('GitHub','projects_for_channel') || {};
+        foreach my $key (keys $projects_for_channel){
+            $message .= "$key: @{$projects_for_channel->{$key}}\n";
+        }
+        return $message || "No GitHub projects set!";
     }
     return;
 }

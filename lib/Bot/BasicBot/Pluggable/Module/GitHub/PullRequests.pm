@@ -8,6 +8,7 @@ use strict;
 use Bot::BasicBot::Pluggable::Module::GitHub;
 use base 'Bot::BasicBot::Pluggable::Module::GitHub';
 use LWP::Simple ();
+use LWP::UserAgent;
 use JSON;
 
 sub help {
@@ -30,9 +31,16 @@ sub said {
     return unless $pri == 2;
 
     if ($mess->{body} =~ /^!pr (?: \s+ (\S+))?/xi) {
-        my $check_projects = $1;
-        $check_projects ||=  $self->get('user_github_project');
-        if (!$check_projects) {
+        my $search = $1;
+
+        my $project = $+{project} || $self->github_project($mess->{channel});
+        return unless $project;
+
+        # Search through all the projects to see if the search word matches
+        my $project = $self->search_projects($mess->{channel}, $search)
+                            || $project;
+
+        if (!$project) {
             $self->reply(
                 $mess, 
                 "No project(s) to check; either specify"
@@ -42,13 +50,12 @@ sub said {
             );
             return 1;
         }
-        for my $project (split /,/, $check_projects) {
-            my $prs = $self->_get_pull_request_count($project);
-            $self->say(
-                channel => $mess->{channel},
-                body => "Open pull requests for $project : $prs",
-            );
-        }
+
+        my $prs = $self->_get_pull_request_count($project);
+        $self->say(
+            channel => $mess->{channel},
+            body => "Open pull requests for $project : $prs",
+        );
         return 1; # "swallow" this message
     }
     return 0; # This message didn't interest us
@@ -57,10 +64,20 @@ sub said {
 
 sub _get_pull_request_count {
     my ($self, $project) = @_;
+
     my $url = "http://github.com/api/v2/json/pulls/" . $project;
-    my $json = LWP::Simple::get($url)
-        or return "Unknown - error fetching $url";
-    my $pulls = JSON::from_json($json)
+    my $ua = LWP::UserAgent->new;
+    my $req = HTTP::Request->new(GET => $url);
+
+    # Auth if necessary
+    if (my $auth = $self->auth_for_project($project)) {
+        my ($user, $token) = split /:/, $auth, 2;
+        $req->authorization_basic("$user/token", "$token");
+    }
+
+    my $res = $ua->request($req) or return "Unknown - error fetching $url";
+
+    my $pulls = JSON::from_json($res->content)
         or return "Unknown - error parsing API response";
 
     my %pulls_by_author;

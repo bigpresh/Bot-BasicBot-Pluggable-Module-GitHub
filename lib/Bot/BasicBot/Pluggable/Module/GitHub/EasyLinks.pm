@@ -37,6 +37,8 @@ sub said {
     while ($mess->{body} =~ m{ 
         (?:  
             \b
+            # Term to search for in project names
+            (?<search> \S+ )? \s*
             # "Issue 42", "PR 42" or "Pull Request 42"
             (?<thing> (?:issue|gh|pr|pull request) ) 
             (?:\s+|-)?
@@ -52,6 +54,10 @@ sub said {
 
         my $project = $+{project} || $self->github_project($mess->{channel});
         return unless $project;
+
+        # Search through all the projects to see if the search word matches
+        $project = $self->search_projects($mess->{channel}, $+{search}) 
+                        || $project;
 
         # Get the Net::GitHub::V2 object we'll be using.  (If we don't get one,
         # for some reason, we can't do anything useful.)
