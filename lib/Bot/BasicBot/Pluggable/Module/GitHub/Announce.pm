@@ -54,21 +54,22 @@ sub tick {
         # Go through all currently-open issues and look for new/reopened ones
         for my $issue (@$issues) {
             my $issuenum = $issue->{number};
+            my $details = {
+                title      => $issue->{title},
+                url        => $issue->{html_url},
+                created_by => $issue->{user},
+            };
+
             if (my $existing = $seen_issues->{$project}{$issuenum}) {
                 if ($existing->{state} eq 'closed') {
                     # It was closed before, but is now in the open feed, so it's
                     # been re-opened
                     push @{ $notifications{reopened} }, 
-                        [ $issuenum, $issue->{title} ];
+                        [ $issuenum, $details ];
                     $existing->{state} = 'open';
                 }
             } else {
                 # A new issue we haven't seen before
-                my $details = {
-                    title      => $issue->{title},
-                    url        => $issue->{html_url},
-                    created_by => $issue->{user},
-                };
                 push @{ $notifications{opened} },
                     [ $issuenum, $details ];
                 $seen_issues->{$project}{$issuenum} = {
