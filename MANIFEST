@@ -3,6 +3,7 @@ MANIFEST
 Makefile.PL
 README
 lib/Bot/BasicBot/Pluggable/Module/GitHub.pm
+lib/Bot/BasicBot/Pluggable/Module/GitHub/Announce.pm
 lib/Bot/BasicBot/Pluggable/Module/GitHub/EasyLinks.pm
 lib/Bot/BasicBot/Pluggable/Module/GitHub/PullRequests.pm
 t/00-load.t
