@@ -100,7 +100,6 @@ sub auth_for_project {
     }
 }
 
-
 # For each channel the bot is in, call projects_for_channel() to find out what 
 # projects are appropriate for that channel, and return a hashref of 
 # channel => projects (leaving out channels for which no project is defined)
@@ -177,9 +176,32 @@ sub said {
         return "Set auth credentials for $project";
     } elsif ($mess->{body} =~ /^!setauthforproject/i) {
         return "Invalid usage.   Try '!help github'";
-    } elsif ($mess->{body} =~ /^!addgithubproject/i) {
-        #TODO:
-        return "Not Implemented!"
+    } elsif ($mess->{body} =~ m{
+        ^!addgithubproject \s+
+        (?<channel> \#\S+ ) \s+
+        (?<project> \S+\/\S+)+
+    }xi){
+        my ($channel, $project) = ($+{channel}, $+{project});
+        my $projects_for_channel = 
+            $self->store->get('GitHub','projects_for_channel') || {};
+        my $projects = $projects_for_channel->{$channel} || [];
+
+        # Check if project already exists
+        for (@$projects){
+            return "Project $_ already exists for channel $channel!"
+                if $_ eq $project;
+        }
+
+        push(@$projects, $project);
+        # Invalidate any cached Net::GitHub object we might have,
+        # so the new settings are used
+        delete $net_github{$project};
+        $projects_for_channel->{$channel} = $projects;
+        $self->store->set(
+            'GitHub', 'projects_for_channel', $projects_for_channel
+        );
+
+        return "OK, set project for $channel: $project";
     } elsif ($mess->{body} =~ /^!deletegithubproject/i) {
         #TODO:
         return "Not Implemented!"
