@@ -318,11 +318,10 @@ shared functionality and common documentation.
 
 =head1 Configuring the default project repo
 
-The modules above need to know what GitHub project repository they should refer
-to.
+The modules above need to know what GitHub project repositories they should
+refer to.
 
-The project (and, optionally, authentication details, if it's not a public
-project) are configured with the C<!setgithubproject> command in a private
+The projects are configured with the C<!setgithubprojects> command in a private
 message to the bot.
 
 You'll need to be authenticated to the bot in order to set the project
@@ -330,19 +329,29 @@ You'll need to be authenticated to the bot in order to set the project
 
 You set the project with:
 
-  !setgithubproject #channel user/projectname
+  !setgithubprojects #channel user/projectname1 user/projectname2 ...
 
-That sets the default project repo to C<projectname> owned by C<user> on GitHub
+The default project repo for each channel is always the first one you set.
+The user/projectname is mapped to C<projectname> owned by C<user> on GitHub
 (in other words, <https://github.com/user/projectname>).
+
+Projects can also be added and removed one by one using C<!addgithubproject> and C<!deletegithubproject> as follows:
+
+    !addgithubproject #channel user/projectname3
+
+    !deletegithubproject #channel user/projectname3
 
 If the project is a private repository which requires authentication, you can
 also tell the bot what user and token it should use to authenticate:
 
-  !setgithubproject #channel user/privateproject someuser:githubtokenhere
+  !setauthforproject #channel user/privateproject someuser:githubtokenhere
 
 You can generate/find an API token for your GitHub account at
 L<https://github.com/account/admin>
 
+If you have many projects that you want to use the same auth credentials, you can use the C<!setdefaultauth> command to set a default auth to use for all projects that don't have a specific auth set.
+
+    !setdefaultauth user:githubtokenhere
 
 =head1 AUTHOR
 
