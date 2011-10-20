@@ -38,78 +38,80 @@ sub tick {
     my $seen_issues = $json ? JSON::from_json($json) : {};
 
 
-    # OK, for each channel, pull details of all issues from the API, and look
-    # for changes
+    # OK, for each channel, pull details of all issues from the API
+    # and look for changes
     my $channels_and_projects = $self->channels_and_projects;
-    channel:
     for my $channel (keys %$channels_and_projects) {
-        my $project = $channels_and_projects->{$channel};
-        my %notifications;
-        warn "Looking for issues for $project for $channel";
+        project:
+        for my $project (@{$channels_and_projects->{$channel}}){
+            my %notifications;
+            warn "Looking for issues for $project for $channel";
 
-        my $ng = $self->ng($project) or next channel;
+            my $ng = $self->ng($project) or next project;
 
-        my $issues = $ng->issue->list('open');
+            my $issues = $ng->issue->list('open');
 
-        # Go through all currently-open issues and look for new/reopened ones
-        for my $issue (@$issues) {
-            my $issuenum = $issue->{number};
-            my $details = {
-                title      => $issue->{title},
-                url        => $issue->{html_url},
-                created_by => $issue->{user},
-            };
-
-            if (my $existing = $seen_issues->{$project}{$issuenum}) {
-                if ($existing->{state} eq 'closed') {
-                    # It was closed before, but is now in the open feed, so it's
-                    # been re-opened
-                    push @{ $notifications{reopened} }, 
-                        [ $issuenum, $details ];
-                    $existing->{state} = 'open';
-                }
-            } else {
-                # A new issue we haven't seen before
-                push @{ $notifications{opened} },
-                    [ $issuenum, $details ];
-                $seen_issues->{$project}{$issuenum} = {
-                    state => 'open',
-                    details => $details,
+            # Go through all currently-open issues and
+            # look for new/reopened ones
+            for my $issue (@$issues) {
+                my $issuenum = $issue->{number};
+                my $details = {
+                    title      => $issue->{title},
+                    url        => $issue->{html_url},
+                    created_by => $issue->{user},
                 };
+
+                if (my $existing = $seen_issues->{$project}{$issuenum}) {
+                    if ($existing->{state} eq 'closed') {
+                        # It was closed before, but is now in the open feed,
+                        # so it's been re-opened
+                        push @{ $notifications{reopened} }, 
+                            [ $issuenum, $details ];
+                        $existing->{state} = 'open';
+                    }
+                } else {
+                    # A new issue we haven't seen before
+                    push @{ $notifications{opened} },
+                        [ $issuenum, $details ];
+                    $seen_issues->{$project}{$issuenum} = {
+                        state => 'open',
+                        details => $details,
+                    };
+                }
             }
-        }
 
-        # Now, go through ones we already know about - if we knew about them,
-        # and they were open, but weren't in the list of open issues we fetched
-        # above, they must now be closed
-        for my $issuenum (keys %{ $seen_issues->{$project} }) {
-            my $existing = $seen_issues->{$project}{$issuenum};
-            my $current = grep { 
-                $_->{number} == $issuenum 
-            } @$issues;
+            # Now, go through ones we already know about - if we knew
+            # about them, and they were open, but weren't in the list
+            # of open issues we fetched above, they must now be closed
+            for my $issuenum (keys %{ $seen_issues->{$project} }) {
+                my $existing = $seen_issues->{$project}{$issuenum};
+                my $current = grep { 
+                    $_->{number} == $issuenum 
+                } @$issues;
 
-            if ($existing->{state} eq 'open' && !$current) {
-                # It was open before, but isn't in the list now - it must have
-                # been closed.
-                push @{ $notifications{closed} },
-                    [ $issuenum, $existing->{details} ];
-                $existing->{state} = 'closed';
+                if ($existing->{state} eq 'open' && !$current) {
+                    # It was open before, but isn't in the list now 
+                    # it must have been closed.
+                    push @{ $notifications{closed} },
+                        [ $issuenum, $existing->{details} ];
+                    $existing->{state} = 'closed';
+                }
             }
-        }
 
-        # Announce any changes
-        for my $type (keys %notifications) {
-            my $s = scalar $notifications{$type} > 1 ? 's':'';
+            # Announce any changes
+            for my $type (keys %notifications) {
+                my $s = scalar $notifications{$type} > 1 ? 's':'';
 
-            $self->say(
-                channel => $channel,
-                body => "Issue$s $type : "
-                    . join ', ', map { 
-                        sprintf "%d (%s) by %s : %s", 
-                        $_->[0], # issue number
-                        @{$_->[1]}{qw(title created_by url)}
-                    } @{ $notifications{$type} }
-            );
+                $self->say(
+                    channel => $channel,
+                    body => "($project) Issue$s $type : "
+                        . join ', ', map { 
+                            sprintf "%d (%s) by %s : %s", 
+                            $_->[0], # issue number
+                            @{$_->[1]}{qw(title created_by url)}
+                        } @{ $notifications{$type} }
+                );
+            }
         }
     }
 
