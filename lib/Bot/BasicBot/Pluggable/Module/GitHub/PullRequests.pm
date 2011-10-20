@@ -7,7 +7,6 @@ package Bot::BasicBot::Pluggable::Module::GitHub::PullRequests;
 use strict;
 use Bot::BasicBot::Pluggable::Module::GitHub;
 use base 'Bot::BasicBot::Pluggable::Module::GitHub';
-use LWP::Simple ();
 use LWP::UserAgent;
 use JSON;
 
