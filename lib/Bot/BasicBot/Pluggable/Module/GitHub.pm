@@ -202,9 +202,29 @@ sub said {
         );
 
         return "OK, set project for $channel: $project";
-    } elsif ($mess->{body} =~ /^!deletegithubproject/i) {
-        #TODO:
-        return "Not Implemented!"
+    } elsif ($mess->{body} =~ m{
+        ^!deletegithubproject \s+
+        (?<channel> \#\S+ ) \s+
+        (?<project> \S+\/\S+)+
+    }xi) {
+        my ($channel, $project) = ($+{channel}, $+{project});
+        my $projects_for_channel = 
+            $self->store->get('GitHub','projects_for_channel') || {};
+        my $projects = $projects_for_channel->{$channel} || [];
+
+        # Check if project already exists
+        for (1..@$projects){
+            if ($projects->[$_] eq $project){
+                delete $projects->[$_];
+                delete $net_github{$project};
+            }
+        }
+        $projects_for_channel->{$channel} = $projects;
+        $self->store->set(
+            'GitHub', 'projects_for_channel', $projects_for_channel
+        );
+
+        return "OK, deleted project for $channel: $project";
     } elsif ($mess->{body} =~ /^!showgithubprojects/i){
         my $message;
         my $projects_for_channel = 

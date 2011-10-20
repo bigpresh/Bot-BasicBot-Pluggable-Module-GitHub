@@ -37,7 +37,7 @@ sub said {
         return unless $project;
 
         # Search through all the projects to see if the search word matches
-        my $project = $self->search_projects($mess->{channel}, $search)
+        $project = $self->search_projects($mess->{channel}, $search)
                             || $project;
 
         if (!$project) {
