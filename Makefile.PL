@@ -16,7 +16,7 @@ WriteMakefile(
         'Bot::BasicBot::Pluggable::Module' => 0,
         'Net::GitHub::V2' => 0,
         'YAML'            => 0,
-        'LWP::Simple'     => 0,
+        'LWP::UserAgent'  => 0,
         'JSON'            => 0,
         'URI::Title'      => 0,
     },
