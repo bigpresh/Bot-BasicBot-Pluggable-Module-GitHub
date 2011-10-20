@@ -19,6 +19,11 @@ sub get {
     return unless $namespace eq 'GitHub';
     return $self->{settings}{$key};
 }
+sub set {
+    my ($self, $namespace, $key, $value) = @_;
+    return unless $namespace eq 'GitHub';
+    $self->{settings}{$key} = $value;
+}
 
 
 # Subclass to override fetching of config setting from store
@@ -40,15 +45,15 @@ use Bot::BasicBot::Pluggable::Module::GitHub;
 
 
 package main;
-use Test::More tests => 4;
+use Test::More tests => 6;
 
 my $plugin = MockBot->new;
 
 # Set some projects for channels, then we can test we get the right info back
 $plugin->{_store} = MockStore->new({
-    project_for_channel => {
-        '#foo' => 'someuser/foo',
-        '#bar' => 'bobby/tables',
+    projects_for_channel => {
+        '#foo' =>  [ 'someuser/foo' ],
+        '#bar' => [ 'bobby/tables', 'tom/drinks' ] ,
     },
     auth_for_project => {
         'bobby/tables' => 'bobby:tables',
@@ -57,11 +62,16 @@ $plugin->{_store} = MockStore->new({
 
 
 
-is($plugin->project_for_channel('#foo'), 'someuser/foo',
+is_deeply ($plugin->projects_for_channel('#foo'), [ 'someuser/foo' ],
     'Got expected project for a channel'
 );
 
-is($plugin->project_for_channel('#fake'), undef,
+is_deeply ($plugin->projects_for_channel('#bar'),
+    [ 'bobby/tables', 'tom/drinks' ],
+    'Got expected projects for a channel'
+);
+
+is($plugin->projects_for_channel('#fake'), undef,
     'Got undef project for non-configured channel'
 );
 
@@ -72,3 +82,9 @@ is($plugin->auth_for_project('fake/project'), undef,
     'Got undef auth info for non-configured project'
 );
 
+# Test default_auth if set
+$plugin->{_store}->set('GitHub', 'default_auth', 'default:auth');
+
+is($plugin->auth_for_project('someuser/foo'), 'default:auth',
+    'Got expected default auth info for a project'
+);
