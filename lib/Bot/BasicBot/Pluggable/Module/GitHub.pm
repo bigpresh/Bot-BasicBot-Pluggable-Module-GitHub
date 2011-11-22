@@ -229,7 +229,7 @@ sub said {
         my $message;
         my $projects_for_channel = 
             $self->store->get('GitHub','projects_for_channel') || {};
-        foreach my $key (keys $projects_for_channel){
+        foreach my $key (keys %$projects_for_channel){
             $message .= "$key: @{$projects_for_channel->{$key}}\n";
         }
         return $message || "No GitHub projects set!";
