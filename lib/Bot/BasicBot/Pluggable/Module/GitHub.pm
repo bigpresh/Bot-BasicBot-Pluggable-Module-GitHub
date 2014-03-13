@@ -50,7 +50,7 @@ sub ng {
     if (my $auth = $self->auth_for_project("$user/$project")) {
         my ($auth_user, $token) = split /:/, $auth, 2;
         $ngparams{login} = $auth_user;
-        $ngparams{token} = $token;
+        $ngparams{pass} = $token;
         $ngparams{always_Authorization} = 1;
     }
 
