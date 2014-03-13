@@ -53,8 +53,10 @@ sub ng {
         $ngparams{pass} = $token;
         $ngparams{always_Authorization} = 1;
     }
-
-    return $net_github{"$user/$project"} = Net::GitHub::V3->new(%ngparams);
+    
+    my $ng = Net::GitHub::V3->new(%ngparams);
+    $ng->set_default_user_repo($user, $project);
+    return $net_github{"$user/$project"} = $ng;
 }
 
 
