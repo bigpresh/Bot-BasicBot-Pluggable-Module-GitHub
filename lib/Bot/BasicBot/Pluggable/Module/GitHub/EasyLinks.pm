@@ -54,15 +54,15 @@ sub said {
 
         my $project = $+{project} || $self->github_project($mess->{channel});
         return unless $project;
-
+        
         # Search through all the projects to see if the search word matches
         $project = $self->search_projects($mess->{channel}, $+{search}) 
                         || $project;
 
-        # Get the Net::GitHub::V2 object we'll be using.  (If we don't get one,
+        # Get the Net::GitHub::V3 object we'll be using.  (If we don't get one,
         # for some reason, we can't do anything useful.)
         my $ng = $self->ng($project) or return;
-
+        
         # First, extract what kind of thing we're looking at, and normalise it a
         # little, then go on to handle it.
         my $thing    = $+{thing};
@@ -103,17 +103,18 @@ sub said {
         # If it was a commit:
         if ($thing eq 'commit') {
             warn "Handling commit $thingnum";
-            my $commit = $ng->commit->show($thingnum);
+            warn "Got an NG object: $ng";
+            my $commit = $ng->repos->commit($thingnum);
             if ($commit && !exists $commit->{error}) {
-                my $title = ( split /\n+/, $commit->{message} )[0];
-                my $url = $commit->{url};
+                my $title = ( split /\n+/, $commit->{commit}{message} )[0];
+                my $url = $commit->{html_url};
+                my $author = $commit->{commit}{author}{name};
                 
                 # Currently, the URL given doesn't include the host, but that
                 # might perhaps change in future, so play it safe:
                 $url = "https://github.com$url" unless $url =~ /^http/;
-                push @return, sprintf "Commit $thingnum (%s) - %s",
-                    $title,
-                    $url;
+                push @return, sprintf "Commit $thingnum (%s by %s) - %s",
+                    $title, $author, $url;
             } else {
                 # We purposefully don't show a message on IRC here, as we guess
                 # what might be a SHA, so we could be annoying saying that we
