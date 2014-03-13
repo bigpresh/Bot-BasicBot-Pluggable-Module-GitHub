@@ -81,7 +81,7 @@ sub said {
         # Right, handle it in the approriate way
         if ($thing =~ /Issue|GH/i) {
             warn "Handling issue $thingnum";
-            my $issue = $ng->issue->view($thingnum);
+            my $issue = $ng->issue->issue($thingnum);
             if (exists $issue->{error}) {
                 push @return, $issue->{error};
                 next match;
