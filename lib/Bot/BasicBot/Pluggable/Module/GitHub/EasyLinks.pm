@@ -31,7 +31,7 @@ sub said {
 
     # If the message was from the bot (for e.g. another module announcing the
     # title of an URL we just said, etc), go no further, to avoid loops
-    return if $mess->{who} eq $self->nick;
+    return if $mess->{who} eq $self->bot->nick;
 
     # Loop through matching things in the message body, assembling quick links
     # ready to return.
