@@ -9,7 +9,7 @@ use base 'Bot::BasicBot::Pluggable::Module';
 # want.
 
 use strict;
-use Net::GitHub::V2;
+use Net::GitHub::V3;
 
 our $VERSION = '0.04';
 
@@ -54,7 +54,7 @@ sub ng {
         $ngparams{always_Authorization} = 1;
     }
 
-    return $net_github{"$user/$project"} = Net::GitHub::V2->new(%ngparams);
+    return $net_github{"$user/$project"} = Net::GitHub::V3->new(%ngparams);
 }
 
 
