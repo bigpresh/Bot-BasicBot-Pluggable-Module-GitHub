@@ -42,10 +42,7 @@ sub ng {
         return $ng;
     }
 
-    my %ngparams = (
-        owner => $user,
-        repo  => $project,
-    );
+    my %ngparams;
     # If authentication is needed, add that in too:
     if (my $auth = $self->auth_for_project("$user/$project")) {
         my ($auth_user, $token) = split /:/, $auth, 2;
