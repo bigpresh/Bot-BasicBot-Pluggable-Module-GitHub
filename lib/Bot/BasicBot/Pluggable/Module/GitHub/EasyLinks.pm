@@ -99,9 +99,13 @@ sub said {
             # pull requests to Net::GitHub::V2, so we can handle PRs on private
             # repos appropriately.
             my $pull = $ng->pull_request->pull($thingnum);
-
-            push @return, sprintf "Pull request $thingnum (%s by %s) - %s";
-                $pull->{title}, $pull->{user}{login}, $pull->{html_url};
+            my $status = $pull->{merged} ? 'merged' : 'open';
+            push @return,
+                sprintf "Pull request $thingnum is %s (%s by %s) - %s",
+                    $status,
+                    $pull->{title},
+                    $pull->{user}{login},
+                    $pull->{html_url};
         }
 
         # If it was a commit:
