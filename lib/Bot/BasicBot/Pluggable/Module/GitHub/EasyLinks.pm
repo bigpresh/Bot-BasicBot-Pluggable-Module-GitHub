@@ -98,9 +98,10 @@ sub said {
             # TODO: send a pull request to add support for fetching details of
             # pull requests to Net::GitHub::V2, so we can handle PRs on private
             # repos appropriately.
-            my $pull_url = "https://github.com/$project/pull/$thingnum";
-            my $title = URI::Title::title($pull_url);
-            push @return, "Pull request $thingnum ($title) - $pull_url";
+            my $pull = $ng->pull_request->pull($thingnum);
+
+            push @return, sprintf "Pull request $thingnum (%s by %s) - %s";
+                $pull->{title}, $pull->{user}{login}, $pull->{html_url};
         }
 
         # If it was a commit:
