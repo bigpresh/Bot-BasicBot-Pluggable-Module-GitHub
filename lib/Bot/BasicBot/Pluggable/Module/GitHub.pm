@@ -9,7 +9,7 @@ use base 'Bot::BasicBot::Pluggable::Module';
 # want.
 
 use strict;
-use Net::GitHub::V2;
+use Net::GitHub::V3;
 
 our $VERSION = '0.04';
 
@@ -42,19 +42,18 @@ sub ng {
         return $ng;
     }
 
-    my %ngparams = (
-        owner => $user,
-        repo  => $project,
-    );
+    my %ngparams;
     # If authentication is needed, add that in too:
     if (my $auth = $self->auth_for_project("$user/$project")) {
         my ($auth_user, $token) = split /:/, $auth, 2;
         $ngparams{login} = $auth_user;
-        $ngparams{token} = $token;
+        $ngparams{pass} = $token;
         $ngparams{always_Authorization} = 1;
     }
-
-    return $net_github{"$user/$project"} = Net::GitHub::V2->new(%ngparams);
+    
+    my $ng = Net::GitHub::V3->new(%ngparams);
+    $ng->set_default_user_repo($user, $project);
+    return $net_github{"$user/$project"} = $ng;
 }
 
 
