@@ -14,11 +14,12 @@ WriteMakefile(
     PREREQ_PM => {
         'Test::More'      => 0,
         'Bot::BasicBot::Pluggable::Module' => 0,
-        'Net::GitHub::V2' => 0,
+        'Net::GitHub::V3' => 0,
         'YAML'            => 0,
         'LWP::Simple'     => 0,
         'JSON'            => 0,
         'URI::Title'      => 0,
+        'WWW::Shorten::GitHub' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Bot-BasicBot-Pluggable-Module-GitHub-*' },

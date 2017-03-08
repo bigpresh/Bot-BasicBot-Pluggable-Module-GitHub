@@ -10,7 +10,7 @@ DESCRIPTION
     interest to you. They're already in use on the Dancer project's IRC
     channel, and internally at my workplace, UK2.
 
-    Most communication with GitHub uses Net::GitHub::V2, and can use
+    Most communication with GitHub uses Net::GitHub::V3, and can use
     authentication with an API key for private repositories.
 
 MODULES
