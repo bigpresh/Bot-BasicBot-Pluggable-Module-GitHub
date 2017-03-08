@@ -6,6 +6,7 @@ lib/Bot/BasicBot/Pluggable/Module/GitHub.pm
 lib/Bot/BasicBot/Pluggable/Module/GitHub/Announce.pm
 lib/Bot/BasicBot/Pluggable/Module/GitHub/EasyLinks.pm
 lib/Bot/BasicBot/Pluggable/Module/GitHub/PullRequests.pm
+lib/Bot/BasicBot/Pluggable/Module/GitHub/IssueSearch.pm
 t/00-load.t
 t/01-parse-config.t
 t/manifest.t
