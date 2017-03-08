@@ -71,6 +71,10 @@ sub said {
     
     return unless $pri == 2;
 
+    # return if $mess->{body} =~ m{://git};
+
+    # do not react to other bots, identified by /^Not-/
+    return if $mess->{who} =~ /^Not-/;
 
     # Loop through matching things in the message body, assembling quick links
     # ready to return.
