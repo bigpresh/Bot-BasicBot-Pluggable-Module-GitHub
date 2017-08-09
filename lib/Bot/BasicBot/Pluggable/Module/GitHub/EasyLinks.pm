@@ -218,11 +218,15 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
 		    (?<num> \d+)
 		    (?:
 			(?:
-			    /commits/ (?<sha> [0-9a-f]{6,40})
-			|
-			    /files
+			    (?:
+				/commits/ (?<sha> [0-9a-f]{6,40})
+			    |
+				/files
+			    )
+			    (?: [?] [^#\s] +)? (?<stop> [#] diff\S* )?
 			)
-			(?: [?] [^#\s] +)? (?<stop> [#] diff\S* )?
+		    |
+			(?<details> /? [#] \S* )
 		    )?
 		|
 		    commit/ (?<sha> [0-9a-f]{6,40})
@@ -250,10 +254,13 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
         # for some reason, we can't do anything useful.)
         my $ng = $self->ng($project) or return;
 	my $stop = $+{stop};
+	my $details = $+{details};
+	$details =~ s/.*[#]// if $details;
 
 
         warn "OK, about to try to handle $thing $thingnum for $project";
 
+	# link to lines inside a blob/diff
 	if ($stop) {
 	    return unless $stop =~ s/([LR])(\d+)(?:-\1(\d+))?$//;
 	    my ($lr, $line, $line2) = ($1, $2, $3);
@@ -285,6 +292,61 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
 		push @return, "$tag: $ret";
 	    }
 	    next;
+	}
+
+	# link to a issue comment
+	elsif ($details) {
+	    next unless $details =~ /issue(comment)?-(\d+)$/;
+	    my ($comment, $id) = ($1, $2);
+            warn "Handling issue $thingnum $details";
+            my $issue = $ng->issue->issue($thingnum);
+            if (exists $issue->{error}) {
+                push @return, $issue->{error};
+                next match;
+            }
+
+	    my $stitle = $issue->{title};
+	    if (length $stitle > 25) {
+		(substr $stitle, 23) = '...';
+	    }
+	    my ($pre_ret, $suff_ret);
+	    my @lines;
+	    # issue text
+	    unless ($comment) {
+		next unless $id eq $issue->{id};
+		@lines = split /\R/, $issue->{body};
+		$pre_ret = sprintf "%s \cC43%d\cC (%s) by \cB%s\cB -\cC ",
+		    (exists $issue->{pull_request} ? "Pull request" : "Issue"),
+		    $thingnum,
+		    $stitle,
+		    _dehih($issue->{user}{login});
+		$suff_ret = "";
+	    }
+	    else {
+		my $comment = $ng->issue->comment($id);
+		if (exists $comment->{error}) {
+		    push @return, $comment->{error};
+		    next match;
+		}
+		@lines = split /\R/, $comment->{body};
+		$pre_ret = sprintf "%s \cC43%d\cC (%s) comment by \cB%s\cB -\cC ",
+		    (exists $issue->{pull_request} ? "Pull request" : "Issue"),
+		    $thingnum,
+		    $stitle,
+		    _dehih($comment->{user}{login});
+		$suff_ret = " \cBon\cB ".($comment->{created_at}=~s/T.*//r);
+	    }
+	    while (@lines && $lines[0] =~ /^>/) {
+		shift @lines;
+	    }
+	    my $text = join ' ', map { /^\s*(.*?)\s*$/ ? $1 : $_ } @lines;
+	    my $maxlen = 290 - (length $pre_ret) - (length $suff_ret);
+	    $text =~ s{\b(https?://github\.com/\S+)}{makeashorterlink($1)}ge;
+	    if (length $text > $maxlen) {
+		(substr $text, $maxlen - 3) = '...';
+	    }
+	    $text =~ s{\w+://\S+\.\.\.$}{...};
+	    push @return, "$pre_ret$text$suff_ret";
 	}
 
         # Right, handle it in the approriate way
