@@ -172,7 +172,18 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
         # If it was a commit:
         if ($thing eq 'commit') {
             warn "Handling commit $thingnum";
-            my $commit = $ng->git_data->commit($thingnum);
+#            my $commit = $ng->git_data->commit($thingnum);
+	    local $@;
+            my $commit = eval { $ng->repos->commit($thingnum) };
+	    if (!$commit && $@) {
+		$commit = +{ error => $@ };
+	    }
+	    if ($commit->{commit}) {
+		if ($commit->{html_url}) {
+		    $commit->{commit}{html_url} = $commit->{html_url};
+		}
+		$commit = $commit->{commit};
+	    }
             if ($commit && !exists $commit->{error}) {
                 my $title = ( split /\n+/, $commit->{message} )[0];
                 my $url = $commit->{html_url};
@@ -191,7 +202,7 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
                 # what might be a SHA, so we could be annoying saying that we
                 # didn't match a commit when someone said a word that just
                 # happened to look like it could be the start of a SHA.
-                warn "No commit details for $thingnum \@ $project/$thingnum";
+                warn "No commit details for $thingnum \@ $project/$thingnum" . ($commit && ref $commit ? ": $commit->{error}" : "");
             }
         }
     }
