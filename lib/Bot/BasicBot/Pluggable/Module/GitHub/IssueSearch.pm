@@ -42,10 +42,10 @@ sub said {
 	my $count = min 3, $realcount;
 	my $expr = $+{expr};
 	my $type = $+{type};
-	$type = 'pr' if $type =~ /^p/i;
 	my $status = $+{status};
+	$type = 'pr' if $type =~ /^p/i;
         my $project;
-	if ($expr =~ s/\s+ in \s+ (?<project> \S+) \s* $//xi) {
+	if ($expr =~ s/(?: ^ | \s+ ) in \s+ (?<project> \S+) \s* $//xi) {
 	    $project = $+{project};
 	}
 	$project ||= $self->github_project($mess->{channel});
