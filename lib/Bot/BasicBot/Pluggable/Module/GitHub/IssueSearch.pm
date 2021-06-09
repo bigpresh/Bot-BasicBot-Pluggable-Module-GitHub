@@ -88,13 +88,14 @@ sub said {
                 push @ret, $issue->{error};
                 next;
             }
-            push @ret, sprintf "%s \cC43%d\cC (\cC59%s\cC) by \cB%s\cB - \cC73%s\cC%s \{%s\cC\}",
+            push @ret, sprintf "%s \cC43%d\cC (\cC59%s\cC) by \cB%s\cB - \cC73%s\cC%s %s\{%s\cC\}",
 		(exists $issue->{pull_request} ? "\cC29Pull request" : "\cC52Issue"),
                 $issue->{number},
                 $issue->{title},
 		_dehih($issue->{user}{login}),
                 makeashorterlink($issue->{html_url}),
 		($issue->{labels}&&@{$issue->{labels}}?" [".(join",",map{$_->{name}}@{$issue->{labels}})."]":""),
+		($issue->{milestone} ? "MS:\cB$issue->{milestone}{title}\cB ": ($pr?$self->_pr_branch($ng, $pr):"")),
 $pr&&$pr->{merged_at}?"\cC46merged on ".($pr->{merged_at}=~s/T.*//r):
 $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$issue->{state}." since ".($issue->{created_at}=~s/T.*//r);
 	}

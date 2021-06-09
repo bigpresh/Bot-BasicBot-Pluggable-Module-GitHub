@@ -147,13 +147,14 @@ sub said {
                 push @return, $issue->{error};
                 next match;
             }
-            push @return, sprintf "%s \cC43%d\cC (\cC59%s\cC) by \cB%s\cB - \cC73%s\cC%s \{%s\cC\}",
+            push @return, sprintf "%s \cC43%d\cC (\cC59%s\cC) by \cB%s\cB - \cC73%s\cC%s %s\{%s\cC\}",
 		(exists $issue->{pull_request} ? "\cC29Pull request" : "\cC52Issue"),
                 $thingnum,
                 $issue->{title},
 		_dehih($issue->{user}{login}),
                 makeashorterlink($issue->{html_url}),
 		($issue->{labels}&&@{$issue->{labels}}?" [".(join",",map{$_->{name}}@{$issue->{labels}})."]":""),
+		($issue->{milestone} ? "MS:\cB$issue->{milestone}{title}\cB ": ($pr?$self->_pr_branch($ng, $pr):"")),
 $pr&&$pr->{merged_at}?"\cC46merged on ".($pr->{merged_at}=~s/T.*//r):
 $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$issue->{state}." since ".($issue->{created_at}=~s/T.*//r);
         }
@@ -182,6 +183,7 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
 		if ($commit->{html_url}) {
 		    $commit->{commit}{html_url} = $commit->{html_url};
 		}
+		$commit->{commit}{sha} //= $commit->{sha};
 		$commit = $commit->{commit};
 	    }
             if ($commit && !exists $commit->{error}) {
@@ -192,11 +194,13 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
                 # might perhaps change in future, so play it safe:
 #                $url = "https://github.com$url" unless $url =~ /^http/;
 #		$url =~ s{https://api.github.com/repos/(.*?)/commits/}{https://github.com/$1/commit/};
-                push @return, sprintf "Commit \cC43$thingnum\cC (\cC59%s\cC) by \cB%s\cB on %s - \cC73%s",
+                push @return, sprintf "Commit \cC43$thingnum\cC (\cC59%s\cC) by \cB%s\cB on %s - \cC73%s\cC %s",
                     $title,
 		    _dehih($commit->{author}{login}||$commit->{committer}{login}||$commit->{author}{name}||$commit->{committer}{name}),
 		    ($commit->{author}{date}=~s/T.*//r),
-                    makeashorterlink($url);
+                    makeashorterlink($url),
+		    $self->_commit_branch($commit, $commit->{sha}),
+		    ;
             } else {
                 # We purposefully don't show a message on IRC here, as we guess
                 # what might be a SHA, so we could be annoying saying that we
@@ -364,13 +368,14 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
                 push @return, $issue->{error};
                 next match;
             }
-            push @return, sprintf "%s \cC43%d\cC (\cC59%s\cC) by \cB%s\cB - \cC73%s\cC%s \{%s\cC\}",
+            push @return, sprintf "%s \cC43%d\cC (\cC59%s\cC) by \cB%s\cB - \cC73%s\cC%s %s\{%s\cC\}",
 		(exists $issue->{pull_request} ? "\cC29Pull request" : "\cC52Issue"),
                 $thingnum,
                 $issue->{title},
 		_dehih($issue->{user}{login}),
                 $project,
 		($issue->{labels}&&@{$issue->{labels}}?" [".(join",",map{$_->{name}}@{$issue->{labels}})."]":""),
+		($issue->{milestone} ? "MS:\cB$issue->{milestone}{title}\cB ": ($pr?$self->_pr_branch($ng, $pr):"")),
 $pr&&$pr->{merged_at}?"\cC46merged on ".($pr->{merged_at}=~s/T.*//r):
 $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$issue->{state}." since ".($issue->{created_at}=~s/T.*//r);
         }
@@ -383,11 +388,13 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
                 my $title = ( split /\n+/, $commit->{message} )[0];
                 my $url = $commit->{html_url};
                 
-                push @return, sprintf "Commit \cC43$thingnum\cC (\cC59%s\cC) by \cB%s\cB on %s - \cC73%s",
+                push @return, sprintf "Commit \cC43$thingnum\cC (\cC59%s\cC) by \cB%s\cB on %s - \cC73%s\cC %s",
                     $title,
 		    _dehih($commit->{author}{login}||$commit->{committer}{login}||$commit->{author}{name}||$commit->{committer}{name}),
 		    ($commit->{author}{date}=~s/T.*//r),
-                    $project;
+                    $project,
+		    $self->_commit_branch($commit, $commit->{sha}),
+		    ;
             } else {
                 # We purposefully don't show a message on IRC here, as we guess
                 # what might be a SHA, so we could be annoying saying that we

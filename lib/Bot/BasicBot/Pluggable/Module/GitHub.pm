@@ -10,6 +10,7 @@ use base 'Bot::BasicBot::Pluggable::Module';
 
 use strict;
 use Net::GitHub::V3;
+use Mojo::UserAgent;
 
 our $VERSION = '0.04';
 
@@ -60,6 +61,60 @@ sub ng {
     my $api = Net::GitHub::V3->new(%ngparams);
     $api->set_default_user_repo($user, $project);
     return $net_github{"$user/$project"} = $api;
+}
+
+my $ua;
+
+sub _make_ua {
+    return $ua if $ua;
+    $ua = Mojo::UserAgent->new;
+    $ua->proxy->detect;
+    return $ua;
+}
+
+my %_commit_branch_cache;
+my $_commit_branch_cache_timeout = 60 * 60;
+
+sub _commit_branch {
+    my ($self, $pr, $commit_id) = @_;
+    _make_ua();
+    my $base_url = $pr->{html_url};
+    $base_url =~ s{/(pull|commit)/.*}{};
+    my $url = "$base_url/branch_commits/$commit_id";
+    my $tag;
+    my $time = time;
+    if ($_commit_branch_cache{$url} && ($_commit_branch_cache{$url}{_time} + $_commit_branch_cache_timeout) > $time) {
+	$tag = $_commit_branch_cache{$url}{tag};
+    } else {
+	warn "getting: $url";
+	my $res = $ua->get("$url")->res;
+	return "" unless $res;
+	my @tags = ((grep !m{[-/]}, $res->dom("ul.branches-list li.branch a")->map("text")->each),
+		    (grep !/-/, $res->dom("ul.branches-tag-list li a")->map("text")->each));
+	#my @tags = grep !/-/, $res->dom("ul li a")->map("text")->each;
+	if (@tags) {
+	    $tag = $tags[-1];
+	    $_commit_branch_cache{$url} = { _time => $time, tag => $tag };
+	}
+    }
+    return "T:\cB$tag\cB " if length $tag;
+    return "";
+}
+
+sub _pr_branch {
+    my ($self, $ng, $pr) = @_;
+    my $issue_number = $pr->{number};
+    my $ie = $ng->issue;
+    my $commit_id;
+    #    while (my $event = $ie->next_event($issue_number))
+    for my $event ($ie->events($issue_number)) {
+	if ($event->{event} eq 'merged') {
+	    $commit_id = $event->{commit_id};
+	    last;
+	}
+    }
+    return '' unless length $commit_id;
+    return $self->_commit_branch($pr, $commit_id);
 }
 
 
