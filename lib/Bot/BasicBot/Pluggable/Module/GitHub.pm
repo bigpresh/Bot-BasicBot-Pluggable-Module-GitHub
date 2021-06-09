@@ -101,6 +101,10 @@ sub channels_and_projects {
     return \%project_for_channel;
 }
 
+sub help {
+    "github module; configuration: !listgithubproject, !setgithubproject <channel> <project> [authtok], !delgithubproject <channel> <project>, !delgithubauth <project>"
+}
+
 # Support configuring project details for a channel (potentially with auth
 # details) via a msg.  This is a bit too tricky to just leave the Vars module to
 # handle, I think.  (Note that each of the modules which inherit from us will
@@ -140,7 +144,55 @@ sub said {
         }
         return $message;
 
-    } elsif ($mess->{body} =~ /^!setgithubproject/i) {
+    } elsif ($mess->{body} =~ m{
+        ^!delgithubproject \s+
+        (?<channel> \#\S+ ) \s+
+        (?<project> \S+   )
+    }xi) {
+        my $project_for_channel = 
+            $self->store->get('GitHub','project_for_channel') || {};
+	my $message = 'project not found';
+	if ($project_for_channel->{$+{channel}} eq $+{project}) {
+	    delete $project_for_channel->{$+{channel}};
+	    $message = "OK, project for $+{channel} deleted";
+	}
+        $self->store->set(
+            'GitHub', 'project_for_channel', $project_for_channel
+        );
+        return $message;
+    } elsif ($mess->{body} =~ m{
+        ^!delgithubauth \s+
+        (?<project> \S+ )
+    }xi) {
+        my $auth_for_project =
+            $self->store->get('GitHub', 'auth_for_project') || {};
+	my $message = 'project not found';
+        if ($auth_for_project->{$+{project}}) {
+	    delete $auth_for_project->{$+{project}};
+	    $message = "OK, auth for $+{project} deleted";
+	}
+        $self->store->set(
+            'GitHub', 'auth_for_project', $auth_for_project
+        );
+
+        # Invalidate any cached Net::GitHub object we might have, so the new
+        # settings are used
+        delete $net_github{$+{project}};
+        return $message;
+    } elsif ($mess->{body} =~ m{^!listgithubproject(?:\s+|$)}xi) {
+        my $project_for_channel = 
+            $self->store->get('GitHub','project_for_channel') || {};
+        my $auth_for_project =
+            $self->store->get('GitHub', 'auth_for_project') || {};
+	my $message;
+	for my $c (sort keys %$project_for_channel) {
+	    $message .= "$c: $project_for_channel->{$c}\n";
+	}
+	if (%$auth_for_project) {
+	    $message .= "*: ".(join " ", sort keys %$auth_for_project)."\n";
+	}
+	return $message || "no projects";
+    } elsif ($mess->{body} =~ /^!(set|del|list)github(project|auth)/i) {
         return "Invalid usage.   Try '!help github'";
     }
     return;

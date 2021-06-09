@@ -17,7 +17,7 @@ our $VERSION = 0.02;
  
 sub help {
     return <<HELPMSG;
-Announce new/changed issues and pull requests
+Announce new/changed issues and pull requests; configuration: !listgithubannounce, !addgithubannounce <channel> <project> [flags], !delgithubannounce <channel> <project>
 HELPMSG
 }
 
@@ -355,7 +355,7 @@ sub said {
 	return $ret;
     }
     elsif ($mess->{body} =~ /^!(?:add|del|list)githubannounce/i) {
-        return "Invalid usage.   Try '!help github'";
+        return "Invalid usage.   Try '!help github::announce'";
     }
     return;
 }

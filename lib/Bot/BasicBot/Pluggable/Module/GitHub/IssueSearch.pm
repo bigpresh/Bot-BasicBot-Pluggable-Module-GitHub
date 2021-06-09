@@ -9,9 +9,7 @@ use JSON;
 
 sub help {
     return <<HELPMSG;
-Search issues
-
-find [1-4] [open|closed|merged] <issue|pr> query [in <project>]
+Search github issues, usage: find [1-4] [open|closed|merged] <issue|pr> query [in <project>]
 HELPMSG
 }
 
