@@ -5,12 +5,14 @@
 
 package Bot::BasicBot::Pluggable::Module::GitHub::EasyLinks;
 use strict;
-use WWW::Shorten::GitHub;
 use Bot::BasicBot::Pluggable::Module::GitHub;
 use base 'Bot::BasicBot::Pluggable::Module::GitHub';
 use URI::Title;
 use List::Util qw(min max);
 use Mojo::DOM;
+use AkariLinkShortener;
+
+my $als = AkariLinkShortener->new;
 
 sub help {
     return <<HELPMSG;
@@ -152,7 +154,7 @@ sub said {
                 $thingnum,
                 $issue->{title},
 		_dehih($issue->{user}{login}),
-                makeashorterlink($issue->{html_url}),
+                $als->shorten($issue->{html_url}),
 		($issue->{labels}&&@{$issue->{labels}}?" [".(join",",map{$_->{name}}@{$issue->{labels}})."]":""),
 		($issue->{milestone} ? "MS:\cB$issue->{milestone}{title}\cB ": ($pr?$self->_pr_branch($ng, $pr):"")),
 $pr&&$pr->{merged_at}?"\cC46merged on ".($pr->{merged_at}=~s/T.*//r):
@@ -198,7 +200,7 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
                     $title,
 		    _dehih($commit->{author}{login}||$commit->{committer}{login}||$commit->{author}{name}||$commit->{committer}{name}),
 		    ($commit->{author}{date}=~s/T.*//r),
-                    makeashorterlink($url),
+                    $als->shorten($url),
 		    $self->_commit_branch($commit, $commit->{sha}),
 		    ;
             } else {
@@ -345,7 +347,7 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
 	    }
 	    my $text = join ' ', map { /^\s*(.*?)\s*$/ ? $1 : $_ } @lines;
 	    my $maxlen = 290 - (length $pre_ret) - (length $suff_ret);
-	    $text =~ s{\b(https?://github\.com/\S+)}{makeashorterlink($1)}ge;
+	    $text =~ s{\b(https?://github\.com/\S+)}{$als->shorten($1)}ge;
 	    if (length $text > $maxlen) {
 		(substr $text, $maxlen - 3) = '...';
 	    }

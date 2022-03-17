@@ -1,11 +1,13 @@
 package Bot::BasicBot::Pluggable::Module::GitHub::IssueSearch;
 use strict;
-use WWW::Shorten::GitHub;
 use Bot::BasicBot::Pluggable::Module::GitHub;
 use base 'Bot::BasicBot::Pluggable::Module::GitHub';
 use LWP::Simple ();
 use List::Util 'min';
 use JSON;
+use AkariLinkShortener;
+
+my $als = AkariLinkShortener->new;
 
 sub help {
     return <<HELPMSG;
@@ -93,7 +95,7 @@ sub said {
                 $issue->{number},
                 $issue->{title},
 		_dehih($issue->{user}{login}),
-                makeashorterlink($issue->{html_url}),
+                $als->shorten($issue->{html_url}),
 		($issue->{labels}&&@{$issue->{labels}}?" [".(join",",map{$_->{name}}@{$issue->{labels}})."]":""),
 		($issue->{milestone} ? "MS:\cB$issue->{milestone}{title}\cB ": ($pr?$self->_pr_branch($ng, $pr):"")),
 $pr&&$pr->{merged_at}?"\cC46merged on ".($pr->{merged_at}=~s/T.*//r):
@@ -103,7 +105,7 @@ $issue->{closed_at}?"\cC55closed on ".($issue->{closed_at}=~s/T.*//r):"\cC52".$i
 	    my $info;
 	    my $sen;
 	    if (@{$res->{items}}) {
-		$sen = "and \cB" . ($res->{total_count}-@ret) . "\cB more: " . makeashorterlink("https://github.com/$project/$search_type?q=".($orig_expr=~y/ /+/r));
+		$sen = "and \cB" . ($res->{total_count}-@ret) . "\cB more: " . $als->shorten("https://github.com/$project/$search_type?q=".($orig_expr=~y/ /+/r));
 	    }
 	    if (@ret > 1) {
 		$info = join "\n", "\c_Issues matching\c_" . ($sen ? " ( $sen )" : ""), @ret;
