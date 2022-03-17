@@ -90,7 +90,7 @@ sub _commit_branch {
 	my $res = $ua->get("$url")->res;
 	return "" unless $res;
 	my @tags = ((grep !m{[-/]}, $res->dom("ul.branches-list li.branch a")->map("text")->each),
-		    (grep !/-/, $res->dom("ul.branches-tag-list li a")->map("text")->each));
+		    (map s/~/-/r, grep !/-/, map s/-(pre\d*|an)/~$1/gr, $res->dom("ul.branches-tag-list li a")->map("text")->each));
 	#my @tags = grep !/-/, $res->dom("ul li a")->map("text")->each;
 	if (@tags) {
 	    $tag = $tags[-1];
