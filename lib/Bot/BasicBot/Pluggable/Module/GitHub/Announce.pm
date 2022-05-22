@@ -215,17 +215,26 @@ sub tick {
     # OK, for each channel, pull details of all issues from the API, and look
     # for changes
  channel:
-    for my $channel (keys %$announce_for_channel) {
+    for my $netchannel (keys %$announce_for_channel) {
+	my $channel = $netchannel;
+	my $network;
+	if ($channel =~ s{^(\w+)/}{}) {
+	    $network = $1;
+	}
+	next if !$network && $self->bot->can('MULTINET') && $self->bot->MULTINET;
+	local $self->bot->{conn_tag} = $network
+	    if $network;
+
         my $dfltproject = $self->github_project($channel) || '';
 	my $dfltuser = $dfltproject && $dfltproject =~ m{^([^/]+)} ? $1 : '';
     project:
-	for my $project (@{ $announce_for_channel->{$channel} || [] }) {
+	for my $project (@{ $announce_for_channel->{$netchannel} || [] }) {
 	    my @bots = grep /^Not-/, $self->bot->pocoirc->channel_list($channel);
 	    @bots = grep { $_ ne $self->bot->nick } @bots;
 	    my %notifications = %{$messages{$project}{notifications} || +{}};
 	    my @push_not = @{$messages{$project}{push_not} || []};
 	    if (%notifications || @push_not) {
-		warn "Looking for issues for $project for $channel"; warn "`bots: @bots" if @bots;
+		warn "Looking for issues for $project for $netchannel"; warn "`bots: @bots" if @bots;
 	    }
 
 	    my $in = $project eq $dfltproject ? '' : $project =~ m{^\Q$dfltuser\E/(.*)$} ? " in $1" : " in $project";
@@ -290,7 +299,7 @@ sub said {
     
     if ($mess->{body} =~ m{
 			      ^!(?<action> add | del )githubannounce \s+
-			      (?<channel> \#\S+ ) \s+
+			      (?<channel> (?:\w+/)?\#\S+ ) \s+
 			      (?<project> \S+   ) (?:\s+
 			      (?<flags> .* ))?
 		      }xi) {
@@ -357,7 +366,7 @@ sub said {
 	return $ret;
     }
     elsif ($mess->{body} =~ /^!(?:add|del|list)githubannounce/i) {
-        return "Invalid usage.   Try '!help github::announce'";
+        return "Invalid usage.   Try 'help github::announce'";
     }
     return;
 }
