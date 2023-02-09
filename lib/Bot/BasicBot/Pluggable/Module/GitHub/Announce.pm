@@ -11,11 +11,8 @@ use JSON;
 use YAML qw(LoadFile DumpFile);
 use Try::Tiny;
 use Bot::BasicBot::Pluggable::MiscUtils qw(util_dehi util_strip_codes);
-use AkariLinkShortener;
 
 our $VERSION = 0.02;
-
-my $als = AkariLinkShortener->new;
 
 sub help {
     return <<HELPMSG;
@@ -254,7 +251,7 @@ sub tick {
 				    $_->[0], # issue number
 				    $_->[1]{title},
 				    util_dehi($_->[2]{by}),
-				    $als->shorten($_->[1]{url})
+				    $self->linkshortener->shorten($_->[1]{url})
 				} @not
 			       );
 		    warn "msg: $message[1]: ".util_strip_codes($message[3]) if @not;
@@ -269,7 +266,7 @@ sub tick {
 		    body => "New commits$in " . join ', ', map {
 			@$_>2 ? (
 			    sprintf "on branch %s by \cB%s\cB - \cC59%s\cC: \cC73%s\cC",
-			    $_->[0], util_dehi($_->[1]), $_->[2], $als->shorten('https://github.com/'.$_->[3].'/tree/'.$_->[0]))
+			    $_->[0], util_dehi($_->[1]), $_->[2], $self->linkshortener->shorten('https://github.com/'.$_->[3].'/tree/'.$_->[0]))
 			    : sprintf 'branch %s now at %s', @{$_}[0,1]
 			} @push_not
 		   );

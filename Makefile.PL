@@ -19,7 +19,6 @@ WriteMakefile(
         'LWP::Simple'     => 0,
         'JSON'            => 0,
         'URI::Title'      => 0,
-        'AkariLinkShortener' => 0,
         'Mojo::UserAgent' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
